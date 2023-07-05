@@ -3,6 +3,8 @@ from tkinter import ttk
 import tkinter.messagebox as messagebox
 import time
 
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>Basic Architecture>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 # Create the main window
 window = tk.Tk()
 window.title("AIConverse")
@@ -10,12 +12,27 @@ window.title("AIConverse")
 # Create the left panel for chat options
 left_panel = tk.Frame(window, width=200, bg="#F5F5F5")
 
+# Create the right panel for the chat display
+right_panel = tk.Frame(window, bg="#FFFFFF")
+
+# Position the left and right panels
+left_panel.pack(side="left", fill="y")
+right_panel.pack(side="right", fill="both", expand=True)
+
+# Create the tab manager for managing chat tabs
+tab_manager = ttk.Notebook(right_panel)
+
+# Position the tab manager in the right panel
+tab_manager.pack(fill="both", expand=True)
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>Profile Section>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 # Create the profile section
 profile_frame = tk.Frame(left_panel, bg="#F0F0F0", pady=10)
 profile_frame.pack(fill="x", side="bottom")
 
 # Create the profile image
-profile_image = tk.Label(profile_frame, text="JD", bg="#F0F0F0", font=("Arial", 24, "bold"), padx=10, pady=10)
+profile_image = tk.Label(profile_frame, text="BS", bg="#F0F0F0", font=("Arial", 24, "bold"), padx=10, pady=10)
 profile_image.pack(side="left")
 
 # Create the profile details
@@ -23,7 +40,7 @@ profile_details = tk.Frame(profile_frame, bg="#F0F0F0")
 profile_details.pack(side="left")
 
 # Create the profile name and status
-profile_name = tk.Label(profile_details, text="John Doe", bg="#F0F0F0", font=("Arial", 14, "bold"))
+profile_name = tk.Label(profile_details, text="B. Acharjee", bg="#F0F0F0", font=("Arial", 14, "bold"))
 profile_name.pack(anchor="w")
 
 profile_status = tk.Label(profile_details, text="Online", bg="#F0F0F0", font=("Arial", 10))
@@ -91,6 +108,9 @@ def logout():
         window.destroy()
         # Add your logout code here
 
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>Left Panel Chat Titles>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 # Create the chat options section
 options_canvas = tk.Canvas(left_panel, bg="#F0F0F0", width=200)
 options_frame = tk.Frame(options_canvas, bg="#F0F0F0")
@@ -103,12 +123,13 @@ options_canvas.configure(yscrollcommand=options_scrollbar.set)
 def start_new_chat():
     create_chat_tab()
 
-# chat_button = ttk.Button(options_frame, text="New Chat", command=start_new_chat)
-# chat_button.pack(fill="x", padx=10, pady=10, expand=True)
-
 # Create a frame to contain the buttons
 buttons_frame = tk.Frame(options_frame, bg="#F0F0F0")
 buttons_frame.pack(fill="x")
+
+# Create the new chat button
+chat_button = ttk.Button(buttons_frame, text="New Chat", command=start_new_chat,width=25)
+chat_button.pack(side="left", padx=0, pady=10)
 
 # Function to toggle the sidebar visibility
 def toggle_sidebar():
@@ -119,14 +140,9 @@ def toggle_sidebar():
         left_panel.pack(side="left", fill="y")
         hide_sidebar_button.configure(text="◀")
 
-# Create the new chat button
-chat_button = ttk.Button(buttons_frame, text="New Chat", command=start_new_chat,width=25)
-chat_button.pack(side="left", padx=0, pady=10)
-
 # Create the hide sidebar button
 hide_sidebar_button = ttk.Button(buttons_frame, text="◀", command=toggle_sidebar,width=5)
 hide_sidebar_button.pack(side="left", padx=0, pady=10)
-
 
 # Create the chat titles section
 chat_titles_frame = tk.Frame(options_frame, bg="#F0F0F0")
@@ -151,6 +167,57 @@ options_frame.bind("<Configure>", configure_canvas)
 options_canvas.pack(side="left", fill="both", expand=True)
 options_scrollbar.pack(side="right", fill="y")
 
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>Chat Display Section>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+# Create a dictionary to store chat contents for each tab
+chat_contents = {}
+
+# Function to display the chat content in the chat window
+def display_chat_content(chat_window, content):
+    chat_window.configure(state='normal')
+    chat_window.delete("1.0", tk.END)  # Clear previous content
+
+    for chat in content:
+        user, message, timestamp = chat
+        timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+
+        # Create a chat bubble based on the user
+        if user == "You":
+            chat_window.insert(tk.END, f"{timestamp_str}\n", "timestamp")
+            chat_window.insert(tk.END, f"You:\n", "user_label")
+            chat_window.insert(tk.END, f"{message}\n\n", "user_bubble")
+        else:
+            chat_window.insert(tk.END, f"{timestamp_str}\n", "timestamp")
+            chat_window.insert(tk.END, f"AI:\n", "ai_label")
+            chat_window.insert(tk.END, f"{message}\n\n", "ai_bubble")
+
+    chat_window.configure(state='disabled')
+    chat_window.see(tk.END)  # Scroll to the bottom of the chat window
+
+    # Configure tags for chat bubbles and labels
+    chat_window.tag_configure("timestamp", font=("Arial", 8, "italic"), foreground="#999999")
+    chat_window.tag_configure("user_label", font=("Arial", 10, "bold"), foreground="#0084FF")
+    chat_window.tag_configure("user_bubble", background="#DCF8C6", foreground="#000000", font=("Arial", 12))
+    chat_window.tag_configure("ai_label", font=("Arial", 10, "bold"), foreground="#FF6767")
+    chat_window.tag_configure("ai_bubble", background="#E8E8E8", foreground="#000000", font=("Arial", 12))
+
+# Function to generate a response from the AI
+def generate_response(chat_window, user_message, typing_indicator_label):
+    # Show typing indicator
+    typing_indicator_label.configure(text="AI is typing...")
+
+    # TODO: Implement your AI response generation logic here
+    # Replace the code below with your own AI response generation code
+    response = "This is a sample response from the AI."
+
+    # Hide typing indicator
+    typing_indicator_label.configure(text="")
+
+    chat_contents[tab_manager.tab(tab_manager.select(), "text")].append(("AI", response, time.time()))
+    display_chat_content(chat_window, chat_contents[tab_manager.tab(tab_manager.select(), "text")])
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>Chat Tab Section>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 # Function to create a new chat tab
 def create_chat_tab():
     chat_title = "Chat " + str(tab_manager.index("end"))
@@ -172,9 +239,7 @@ def create_chat_tab():
     user_input = tk.Entry(user_input_frame, width=60)
     user_input.pack(side="left")
 
-    send_button = ttk.Button(user_input_frame, text="Send", command
-
-=lambda: handle_user_input(chat_window, user_input))
+    send_button = ttk.Button(user_input_frame, text="Send", command=lambda: handle_user_input(chat_window, user_input))
     send_button.pack(side="left")
 
     # Create the typing indicator label for the tab
@@ -230,44 +295,6 @@ def switch_chat_tab(chat_title):
             tab_manager.select(tab)
             break
 
-# Function to display the chat content in the chat window
-def display_chat_content(chat_window, content):
-    chat_window.configure(state='normal')
-    chat_window.delete("1.0", tk.END)  # Clear previous content
-    for chat in content:
-        user, message, timestamp = chat
-        timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
-        chat_window.insert(tk.END, f"{user} ({timestamp_str}):\n{message}\n\n")
-    chat_window.configure(state='disabled')
-    chat_window.see(tk.END)  # Scroll to the bottom of the chat window
-
-# Function to generate a response from the AI
-def generate_response(chat_window, user_message, typing_indicator_label):
-    # Show typing indicator
-    typing_indicator_label.configure(text="AI is typing...")
-
-    # TODO: Implement your AI response generation logic here
-    # Replace the code below with your own AI response generation code
-    response = "This is a sample response from the AI."
-
-    # Hide typing indicator
-    typing_indicator_label.configure(text="")
-
-    chat_contents[tab_manager.tab(tab_manager.select(), "text")].append(("AI", response, time.time()))
-    display_chat_content(chat_window, chat_contents[tab_manager.tab(tab_manager.select(), "text")])
-
-# Create the right panel for the chat display
-right_panel = tk.Frame(window, bg="#FFFFFF")
-
-# Create the tab manager for managing chat tabs
-tab_manager = ttk.Notebook(right_panel)
-
-# Create a dictionary to store chat contents for each tab
-chat_contents = {}
-
-# Position the tab manager in the right panel
-tab_manager.pack(fill="both", expand=True)
-
 # Create the default screen content
 default_tab = tk.Frame(tab_manager)
 default_tab.pack(fill="both", expand=True)
@@ -276,13 +303,6 @@ default_label = tk.Label(default_tab, text="Welcome to AIConverse!", font=("Aria
 default_label.pack()
 
 tab_manager.add(default_tab, text="Home")
-
-# Create the Examples tab
-examples_tab = tk.Frame(tab_manager)
-examples_tab.pack(fill="both", expand=True)
-
-examples_label = tk.Label(examples_tab, text="Examples", font=("Arial", 16, "bold"), pady=100)
-examples_label.pack()
 
 # Dummy data for examples
 examples = [
@@ -302,6 +322,13 @@ limitations = [
     "Does not always ask clarifying questions",
     "Sensitive to input phrasing",
 ]
+
+# Create the Examples tab
+examples_tab = tk.Frame(tab_manager)
+examples_tab.pack(fill="both", expand=True)
+
+examples_label = tk.Label(examples_tab, text="Examples", font=("Arial", 16, "bold"), pady=100)
+examples_label.pack()
 
 for example in examples:
     example_label = tk.Label(examples_tab, text=example, font=("Arial", 12), pady=10)
@@ -335,9 +362,7 @@ for limitation in limitations:
 
 tab_manager.add(limitations_tab, text="Limitations")
 
-# Position the left and right panels
-left_panel.pack(side="left", fill="y")
-right_panel.pack(side="right", fill="both", expand=True)
+# --------------end-------------
 
 # Run the main window loop
 window.mainloop()
