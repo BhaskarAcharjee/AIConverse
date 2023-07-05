@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog, simpledialog
 import tkinter.messagebox as messagebox
 import time
 
@@ -128,7 +128,7 @@ buttons_frame = tk.Frame(options_frame, bg="#F0F0F0")
 buttons_frame.pack(fill="x")
 
 # Create the new chat button
-chat_button = ttk.Button(buttons_frame, text="New Chat", command=start_new_chat,width=25)
+chat_button = ttk.Button(buttons_frame, text="New Chat", command=start_new_chat, width=28)
 chat_button.pack(side="left", padx=0, pady=10)
 
 # Function to toggle the sidebar visibility
@@ -272,9 +272,45 @@ def create_chat_option(chat_title):
     def switch_chat(event):
         switch_chat_tab(chat_title)
 
-    chat_option_label = tk.Label(chat_option_frame, text=chat_title, bg="#F0F0F0", width=20, anchor="w")
+    chat_option_label = tk.Label(chat_option_frame, text=chat_title, bg="#F0F0F0", width=17, anchor="w")
     chat_option_label.pack(side="left", pady=5)
     chat_option_label.bind("<Button-1>", switch_chat)
+
+
+    # Reference to the selected chat tab
+    selected_chat_tab = None
+
+    # Function to rename the chat tab
+    def rename_chat():
+        nonlocal selected_chat_tab  # Update the reference to the selected chat tab
+
+        new_chat_title = simpledialog.askstring("Rename Chat", "Enter a new chat title:")
+        if new_chat_title:
+            chat_option_label.configure(text=new_chat_title)
+            tab_manager.tab(selected_chat_tab, text=new_chat_title)
+            
+            # Rename the chat title in the chat_contents dictionary
+            old_chat_title = tab_manager.tab(selected_chat_tab, "text")
+            chat_contents[new_chat_title] = chat_contents.pop(old_chat_title)
+
+            selected_chat_tab = None  # Reset the selected chat tab
+
+    rename_button = ttk.Button(chat_option_frame, text="✒️", width=3, command=rename_chat)
+    rename_button.pack(side="left")
+
+    # Function to export the chat
+    def export_chat():
+        # Ask for the file name
+        file_name = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+        if file_name:
+            with open(file_name, "w") as file:
+                for chat in chat_contents[chat_title]:
+                    user, message, timestamp = chat
+                    timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+                    file.write(f"{timestamp_str} - {user}: {message}\n")
+
+    export_button = ttk.Button(chat_option_frame, text="📥", width=3, command=export_chat)
+    export_button.pack(side="left")
 
     # Function to delete the chat tab and associated chat option
     def delete_chat():
@@ -285,8 +321,9 @@ def create_chat_option(chat_title):
                 chat_option_frame.destroy()
                 break
 
-    delete_button = ttk.Button(chat_option_frame, text="X", width=3, command=delete_chat)
-    delete_button.pack(side="left", padx=(0, 5))
+    delete_button = ttk.Button(chat_option_frame, text="❌", width=3, command=delete_chat)
+    delete_button.pack(side="left")
+
 
 # Function to switch to a specific chat tab
 def switch_chat_tab(chat_title):
