@@ -9,11 +9,29 @@ import time
 window = tk.Tk()
 window.title("AIConverse")
 
+# Default color scheme values
+col_left_panel = "#F5F5F5"
+col_right_panel = "#FFFFFF"
+col_profile_frame = "#F0F0F0"
+col_profile_image = "#F0F0F0"
+col_profile_details = "#F0F0F0"
+col_profile_name = "#F0F0F0"
+col_profile_status = "#F0F0F0"
+col_profile_options_button = "#F0F0F0"
+col_options_frame = "#F0F0F0"
+col_options_canvas = "#F0F0F0"
+col_buttons_frame = "#F0F0F0"
+col_chat_titles_frame = "#F0F0F0"
+col_typing_indicator_label = "#F0F0F0"
+col_chat_option_frame = "#F0F0F0"
+col_chat_option_label = "#F0F0F0"
+
+
 # Create the left panel for chat options
-left_panel = tk.Frame(window, width=200, bg="#F5F5F5")
+left_panel = tk.Frame(window, width=200, bg=col_left_panel)
 
 # Create the right panel for the chat display
-right_panel = tk.Frame(window, bg="#FFFFFF")
+right_panel = tk.Frame(window, bg=col_right_panel)
 
 # Position the left and right panels
 left_panel.pack(side="left", fill="y")
@@ -25,29 +43,30 @@ tab_manager = ttk.Notebook(right_panel)
 # Position the tab manager in the right panel
 tab_manager.pack(fill="both", expand=True)
 
+
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>Profile Section>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Create the profile section
-profile_frame = tk.Frame(left_panel, bg="#F0F0F0", pady=10)
+profile_frame = tk.Frame(left_panel, bg=col_profile_frame, pady=10)
 profile_frame.pack(fill="x", side="bottom")
 
 # Create the profile image
-profile_image = tk.Label(profile_frame, text="BS", bg="#F0F0F0", font=("Arial", 24, "bold"), padx=10, pady=10)
+profile_image = tk.Label(profile_frame, text="BS", bg=col_profile_image, font=("Arial", 24, "bold"), padx=10, pady=10)
 profile_image.pack(side="left")
 
 # Create the profile details
-profile_details = tk.Frame(profile_frame, bg="#F0F0F0")
+profile_details = tk.Frame(profile_frame, bg=col_profile_details)
 profile_details.pack(side="left")
 
 # Create the profile name and status
-profile_name = tk.Label(profile_details, text="B. Acharjee", bg="#F0F0F0", font=("Arial", 14, "bold"))
+profile_name = tk.Label(profile_details, text="B. Acharjee", bg=col_profile_name, font=("Arial", 14, "bold"))
 profile_name.pack(anchor="w")
 
-profile_status = tk.Label(profile_details, text="Online", bg="#F0F0F0", font=("Arial", 10))
+profile_status = tk.Label(profile_details, text="Online", bg=col_profile_status, font=("Arial", 10))
 profile_status.pack(anchor="w")
 
 # Create the profile options button
-profile_options_button = tk.Label(profile_frame, text="•••", bg="#F0F0F0", padx=10)
+profile_options_button = tk.Label(profile_frame, text="•••", bg=col_profile_options_button, padx=10)
 profile_options_button.pack(side="right", padx=10)
 
 # Function to show the profile options popup sub-panel
@@ -56,7 +75,7 @@ def show_profile_options():
     popup.title("Profile Options")
     popup.geometry("200x150")
 
-    options_frame = tk.Frame(popup, bg="#F0F0F0")
+    options_frame = tk.Frame(popup, bg=col_options_frame)
     options_frame.pack(fill="both", expand=True)
 
     options = ["Clear Conversations", "Help & FAQ", "Settings", "Logout"]
@@ -98,7 +117,137 @@ def show_help_faq():
 
 # Function to show settings
 def show_settings():
-    messagebox.showinfo("Settings", "This is the Settings section.")
+    # Create the settings window
+    settings_window = tk.Toplevel(window)
+    settings_window.title("Settings")
+    settings_window.geometry("400x300")
+
+    # Create the color scheme selection
+    color_scheme_frame = tk.Frame(settings_window)
+    color_scheme_frame.pack(pady=10)
+
+    color_scheme_label = tk.Label(color_scheme_frame, text="Color Scheme:")
+    color_scheme_label.pack(side="left")
+
+    color_scheme_var = tk.StringVar()
+    color_scheme_combobox = ttk.Combobox(color_scheme_frame, textvariable=color_scheme_var)
+    color_scheme_combobox['values'] = ('Light', 'Dark')
+    color_scheme_combobox.current(0)
+    color_scheme_combobox.pack(side="left", padx=10)
+
+    # Create the layout selection
+    layout_frame = tk.Frame(settings_window)
+    layout_frame.pack(pady=10)
+
+    layout_label = tk.Label(layout_frame, text="Layout:")
+    layout_label.pack(side="left")
+
+    layout_var = tk.StringVar()
+    layout_combobox = ttk.Combobox(layout_frame, textvariable=layout_var)
+    layout_combobox['values'] = ('Compact', 'Comfortable')
+    layout_combobox.current(0)
+    layout_combobox.pack(side="left", padx=10)
+
+    # Create the chat bubble style selection
+    bubble_style_frame = tk.Frame(settings_window)
+    bubble_style_frame.pack(pady=10)
+
+    bubble_style_label = tk.Label(bubble_style_frame, text="Chat Bubble Style:")
+    bubble_style_label.pack(side="left")
+
+    bubble_style_var = tk.StringVar()
+    bubble_style_combobox = ttk.Combobox(bubble_style_frame, textvariable=bubble_style_var)
+    bubble_style_combobox['values'] = ('Standard', 'Modern')
+    bubble_style_combobox.current(0)
+    bubble_style_combobox.pack(side="left", padx=10)
+
+    # Create the apply button
+    def apply_settings():
+        global col_left_panel, col_right_panel, col_profile_frame, col_profile_image, col_profile_details, col_profile_name, col_profile_status, col_profile_options_button, col_options_frame, col_options_canvas, col_buttons_frame, col_typing_indicator_label, col_chat_option_frame, col_chat_option_label, col_chat_titles_frame
+        
+        selected_color_scheme = color_scheme_var.get()
+        selected_layout = layout_var.get()
+        selected_bubble_style = bubble_style_var.get()
+
+        # Apply the selected settings (update the application's theme, layout, and chat bubble styles)
+        if selected_color_scheme == 'Light':
+            # Default color scheme values
+            col_left_panel = "#F5F5F5"
+            col_right_panel = "#FFFFFF"
+            col_profile_frame = "#F0F0F0"
+            col_profile_image = "#F0F0F0"
+            col_profile_details = "#F0F0F0"
+            col_profile_name = "#F0F0F0"
+            col_profile_status = "#F0F0F0"
+            col_profile_options_button = "#F0F0F0"
+            col_options_frame = "#F0F0F0"
+            col_options_canvas = "#F0F0F0"
+            col_buttons_frame = "#F0F0F0"
+            col_chat_titles_frame = "#F0F0F0"
+            col_typing_indicator_label = "#F0F0F0"
+            col_chat_option_frame = "#F0F0F0"
+            col_chat_option_label = "#F0F0F0"
+        elif selected_color_scheme == 'Dark':
+            col_left_panel = "#1F1F1F"
+            col_right_panel = "#2A2A2A"
+            col_profile_frame = "#1F1F1F"
+            col_profile_image = "#363636"
+            col_profile_details = "#363636"
+            col_profile_name = "#FFFFFF"
+            col_profile_status = "#FFFFFF"
+            col_profile_options_button = "#363636"
+            col_options_frame = "#363636"
+            col_options_canvas = "#363636"
+            col_buttons_frame = "#363636"
+            col_chat_titles_frame = "#1F1F1F"
+            col_typing_indicator_label = "#363636"
+            col_chat_option_frame = "#363636"
+            col_chat_option_label = "#FFFFFF"
+
+        # # Apply compact layout
+        # if selected_layout == 'Compact':
+        #     # Set the appropriate padding and spacing values for the compact layout
+        # # Apply comfortable layout
+        # elif selected_layout == 'Comfortable':
+        #     # Set the appropriate padding and spacing values for the comfortable layout
+
+        # # Apply standard bubble style
+        # if selected_bubble_style == 'Standard':
+        #     # Set the background color of the chat bubbles
+        # # Apply modern bubble style
+        # elif selected_bubble_style == 'Modern':
+        #     # Set the background color of the chat bubbles
+
+
+        # Update the values in the GUI
+        update_gui_values()
+
+        # Show a success message
+        messagebox.showinfo("Settings", "Settings applied successfully.")
+
+        # Close the settings window
+        settings_window.destroy()
+        
+    # Update the GUI elements with the new color scheme values
+    def update_gui_values():
+        left_panel.configure(background=col_left_panel)
+        right_panel.configure(background=col_right_panel)
+        profile_frame.configure(background=col_profile_frame)
+        profile_image.configure(background=col_profile_image)
+        profile_details.configure(background=col_profile_details)
+        profile_name.configure(background=col_profile_name)
+        profile_status.configure(background=col_profile_status)
+        profile_options_button.configure(background=col_profile_options_button)
+        options_frame.configure(background=col_options_frame)
+        options_canvas.configure(background=col_options_canvas)
+        buttons_frame.configure(background=col_buttons_frame)
+        chat_titles_frame.configure(background=col_chat_titles_frame)
+        # typing_indicator_label.configure(background=col_typing_indicator_label)
+        # option_frame.configure(background=col_option_frame)
+        # chat_option_label.configure(background=col_chat_option_label)
+
+    apply_button = ttk.Button(settings_window, text="Apply", command=apply_settings)
+    apply_button.pack(pady=10)
 
 # Function to logout
 def logout():
@@ -112,8 +261,8 @@ def logout():
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>Left Panel Chat Titles>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Create the chat options section
-options_canvas = tk.Canvas(left_panel, bg="#F0F0F0", width=200)
-options_frame = tk.Frame(options_canvas, bg="#F0F0F0")
+options_canvas = tk.Canvas(left_panel, bg=col_options_canvas, width=200)
+options_frame = tk.Frame(options_canvas, bg=col_options_frame)
 options_scrollbar = ttk.Scrollbar(left_panel, orient="vertical", command=options_canvas.yview)
 
 options_canvas.create_window((0, 0), window=options_frame, anchor="nw")
@@ -124,7 +273,7 @@ def start_new_chat():
     create_chat_tab()
 
 # Create a frame to contain the buttons
-buttons_frame = tk.Frame(options_frame, bg="#F0F0F0")
+buttons_frame = tk.Frame(options_frame, bg=col_buttons_frame)
 buttons_frame.pack(fill="x")
 
 # Create the new chat button
@@ -145,7 +294,7 @@ hide_sidebar_button = ttk.Button(buttons_frame, text="◀", command=toggle_sideb
 hide_sidebar_button.pack(side="left", padx=0, pady=10)
 
 # Create the chat titles section
-chat_titles_frame = tk.Frame(options_frame, bg="#F0F0F0")
+chat_titles_frame = tk.Frame(options_frame, bg=col_chat_titles_frame)
 chat_titles_frame.pack(fill="x")
 
 # Create the chat titles scrollbar
@@ -234,17 +383,23 @@ def create_chat_tab():
 
     # Create the user input box and send button for the tab
     user_input_frame = tk.Frame(chat_tab)
-    user_input_frame.pack(side="bottom", pady=10)
+    user_input_frame.pack(side="top", pady=6)
 
-    user_input = tk.Entry(user_input_frame, width=60)
-    user_input.pack(side="left")
+    user_input = tk.Entry(user_input_frame, width=90, font=("Arial", 10), bd=5)
+    user_input.pack(side="left", pady=6)
 
+    # Create the send button
     send_button = ttk.Button(user_input_frame, text="Send", command=lambda: handle_user_input(chat_window, user_input))
     send_button.pack(side="left")
 
+    # Create the footer label
+    footer_label = tk.Label(chat_tab, text="Free Research Preview. AIConverse may produce inaccurate information about people, places, or facts. AIConverse July 07 Version", bg="#F0F0F0", fg="#888888")
+    footer_label.pack(side="top")
+
     # Create the typing indicator label for the tab
-    typing_indicator_label = tk.Label(chat_tab, text="", bg="#F0F0F0")
+    typing_indicator_label = tk.Label(chat_tab, text="", bg=col_typing_indicator_label)
     typing_indicator_label.pack(side="bottom")
+
 
     # Function to handle user input for the tab
     def handle_user_input(chat_window, user_input):
@@ -265,14 +420,14 @@ def create_chat_tab():
 
 # Function to create a chat option in the chat options section
 def create_chat_option(chat_title):
-    chat_option_frame = tk.Frame(chat_titles_frame, bg="#F0F0F0")
+    chat_option_frame = tk.Frame(chat_titles_frame, bg=col_chat_option_frame)
     chat_option_frame.pack(fill="x")
 
     # Function to switch to the corresponding chat tab
     def switch_chat(event):
         switch_chat_tab(chat_title)
 
-    chat_option_label = tk.Label(chat_option_frame, text=chat_title, bg="#F0F0F0", width=17, anchor="w")
+    chat_option_label = tk.Label(chat_option_frame, text=chat_title, bg=col_chat_option_label, width=17, anchor="w")
     chat_option_label.pack(side="left", pady=5)
     chat_option_label.bind("<Button-1>", switch_chat)
 
