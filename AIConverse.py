@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog
 import tkinter.messagebox as messagebox
 import time
+from shared_data import user_data
 
 # Function to create the main application window
 def create_main_application_window():
@@ -57,15 +58,29 @@ def create_main_application_window():
     profile_frame.pack(fill="x", side="bottom")
 
     # Create the profile image
-    profile_image = tk.Label(profile_frame, text="BS", bg=col_profile_image, font=("Arial", 24, "bold"), padx=10, pady=10)
+    first_name_initial = user_data.get("first_name", "")[:1].upper()
+    last_name_initial = user_data.get("last_name", "")[:1].upper()
+    profile_image_text = f"{first_name_initial}{last_name_initial}" if first_name_initial and last_name_initial else "XD"
+
+    profile_image = tk.Label(profile_frame, text=profile_image_text, bg=col_profile_image, font=("Arial", 24, "bold"), padx=10, pady=10)
     profile_image.pack(side="left")
 
     # Create the profile details
     profile_details = tk.Frame(profile_frame, bg=col_profile_details)
     profile_details.pack(side="left")
 
-    # Create the profile name and status
-    profile_name = tk.Label(profile_details, text="B. Acharjee", bg=col_profile_name, font=("Arial", 14, "bold"))
+    # Assuming the user's first name and last name are stored in the user_data dictionary
+    first_name = user_data.get("first_name", "")
+    last_name = user_data.get("last_name", "")
+
+    # Format the profile name text
+    if first_name and last_name:
+        profile_name_text = f"{first_name[:1].upper()}. {last_name[:7].capitalize() + '...' if len(last_name) > 7 else last_name.capitalize()}"
+    else:
+        profile_name_text = "User"
+
+    # Create the profile name label
+    profile_name = tk.Label(profile_details, text=profile_name_text, bg=col_profile_name, font=("Arial", 14, "bold"))
     profile_name.pack(anchor="w")
 
     profile_status = tk.Label(profile_details, text="Online", bg=col_profile_status, font=("Arial", 10))
@@ -462,7 +477,7 @@ def create_main_application_window():
 
                 selected_chat_tab = None  # Reset the selected chat tab
 
-        rename_button = ttk.Button(chat_option_frame, text="✒️", width=3, command=rename_chat)
+        rename_button = ttk.Button(chat_option_frame, text="🖊️", width=3, command=rename_chat)
         rename_button.pack(side="left")
 
         # Function to export the chat
@@ -476,7 +491,7 @@ def create_main_application_window():
                         timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
                         file.write(f"{timestamp_str} - {user}: {message}\n")
 
-        export_button = ttk.Button(chat_option_frame, text="📥", width=3, command=export_chat)
+        export_button = ttk.Button(chat_option_frame, text="💾", width=3, command=export_chat)
         export_button.pack(side="left")
 
         # Function to delete the chat tab and associated chat option
@@ -488,7 +503,7 @@ def create_main_application_window():
                     chat_option_frame.destroy()
                     break
 
-        delete_button = ttk.Button(chat_option_frame, text="❌", width=3, command=delete_chat)
+        delete_button = ttk.Button(chat_option_frame, text="🗑️", width=3, command=delete_chat)
         delete_button.pack(side="left")
 
 
@@ -524,8 +539,8 @@ def create_main_application_window():
     content_frame.pack(fill="both", expand=True)
 
     # Add the welcome label
-    welcome_label = tk.Label(content_frame, text="Welcome to AIConverse!", font=("Arial", 16, "bold"), bg=col_right_panel)
-    welcome_label.grid(row=0, column=0, columnspan=3, padx=20, pady=20, sticky="ew")
+    welcome_label = tk.Label(content_frame, text="Welcome to AIConverse!", font=("Arial", 18, "bold"), bg=col_right_panel)
+    welcome_label.grid(row=0, column=0, columnspan=3, pady=150, sticky="ew")
 
     # Create LabelFrames for Examples, Capabilities, and Limitations
     examples_frame = tk.LabelFrame(content_frame, text="Examples", font=("Arial", 16, "bold"), bg=col_right_panel)
@@ -575,3 +590,6 @@ def create_main_application_window():
 
     # Run the main window loop
     window.mainloop()
+
+if __name__ == "__main__":
+    create_main_application_window()

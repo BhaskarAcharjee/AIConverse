@@ -3,6 +3,7 @@ from tkinter import ttk
 import tkinter.messagebox as messagebox
 import hashlib
 from AIConverse import create_main_application_window
+from shared_data import user_data
 
 # Sample login credentials (for demonstration purposes only)
 valid_credentials = {
@@ -14,7 +15,6 @@ valid_credentials = {
 global login_window, registration_step, username_entry, password_entry, first_name_entry, last_name_entry
 
 registration_step = 1
-user_data = {}
 
 
 def create_login_window():
@@ -24,7 +24,7 @@ def create_login_window():
     # login_window.geometry("500x300")
     login_window.state("zoomed")
 
-    logo_label = tk.Label(login_window, text="AIConverse Logo", font=("Arial", 20, "bold"))
+    logo_label = tk.Label(login_window, text="🤖", font=("Arial", 60, "bold"))
     logo_label.pack(pady=30)
 
     welcome_label = tk.Label(login_window, text="Welcome to AIConverse", font=("Arial", 16))
@@ -60,7 +60,7 @@ def create_login_form():
     # login_window.geometry("500x300")
     login_window.state("zoomed")
 
-    logo_label = tk.Label(login_window, text="AIConverse Logo", font=("Arial", 20, "bold"))
+    logo_label = tk.Label(login_window, text="🤖", font=("Arial", 60, "bold"))
     logo_label.pack(pady=30)
 
     login_label = tk.Label(login_window, text="Login with your credentials", font=("Arial", 16))
@@ -81,6 +81,15 @@ def create_login_form():
     # Create the login button
     login_button = ttk.Button(login_window, text="Login", command=authenticate_user)
     login_button.pack(pady=20)
+
+    # "Forgot password" and "Want to register" texts
+    forgot_password_text = tk.Label(login_window, text="Forgot password", fg="blue", cursor="hand2")
+    forgot_password_text.pack(pady=5)
+    forgot_password_text.bind("<Button-1>", forgot_password)
+
+    want_to_register_text = tk.Label(login_window, text="Want to register", fg="blue", cursor="hand2")
+    want_to_register_text.pack(pady=5)
+    want_to_register_text.bind("<Button-1>", go_to_signup)
 
     # Run the login window loop
     login_window.mainloop()
@@ -121,7 +130,7 @@ def create_signup_window():
     # login_window.geometry("500x300")
     login_window.state("zoomed")
 
-    logo_label = tk.Label(login_window, text="AIConverse Logo", font=("Arial", 20, "bold"))
+    logo_label = tk.Label(login_window, text="🤖", font=("Arial", 60, "bold"))
     logo_label.pack(pady=30)
 
     headline_label = tk.Label(login_window, text="Create Your Account", font=("Arial", 16))
@@ -141,6 +150,12 @@ def create_signup_window():
         continue_button = ttk.Button(login_window, text="Continue", command=step_two)
         continue_button.pack(pady=20)
 
+        # "Already have an account? Log in" text
+        login_text = tk.Label(login_window, text="Already have an account? Log in", fg="blue", cursor="hand2")
+        login_text.pack(pady=5)
+        login_text.bind("<Button-1>", go_to_login)
+
+
     elif registration_step == 2:
         first_name_label = tk.Label(login_window, text="First Name:")
         first_name_label.pack()
@@ -154,6 +169,11 @@ def create_signup_window():
 
         register_button = ttk.Button(login_window, text="Register", command=complete_registration)
         register_button.pack(pady=20)
+
+        # "Already have an account? Log in" text
+        login_text = tk.Label(login_window, text="Already have an account? Log in", fg="blue", cursor="hand2")
+        login_text.pack(pady=5)
+        login_text.bind("<Button-1>", go_to_login)
 
     login_window.mainloop()
 
@@ -193,3 +213,25 @@ def complete_registration():
         create_login_window()
     else:
         messagebox.showerror("Registration Error", "Please enter your first name and last name.")
+
+
+# Function to navigate to the login window
+def go_to_login(event):
+    global login_window, registration_step
+    login_window.destroy()
+    registration_step = 1
+    create_login_form()
+
+# Function to navigate to the sign-up window
+def go_to_signup(event):
+    global login_window
+    login_window.destroy()
+    create_signup_window()
+
+# Function to handle "Forgot password" behavior (you can implement this according to your requirements)
+def forgot_password(event):
+    messagebox.showinfo("Forgot Password", "This feature is not implemented yet!")
+
+
+if __name__ == "__main__":
+    create_login_window()
