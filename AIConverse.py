@@ -12,6 +12,7 @@ def create_main_application_window():
     global window
     window = tk.Tk()
     window.title("AIConverse")
+    window.state("zoomed")
 
     # Default color scheme values
     col_left_panel = "#F5F5F5"
