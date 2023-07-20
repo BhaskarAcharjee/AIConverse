@@ -25,6 +25,7 @@ col_chat_titles_frame = "#F0F0F0"
 col_typing_indicator_label = "#F0F0F0"
 col_chat_option_frame = "#F0F0F0"
 col_chat_option_label = "#F0F0F0"
+col_selected_chat_tab = "#D0D0D0"
 
 
 # Create the left panel for chat options
@@ -294,7 +295,7 @@ hide_sidebar_button = ttk.Button(buttons_frame, text="◀", command=toggle_sideb
 hide_sidebar_button.pack(side="left", padx=10, pady=10)
 
 # Create the chat titles section
-chat_titles_frame = tk.Frame(options_frame, bg=col_chat_titles_frame, width=45)
+chat_titles_frame = tk.Frame(options_frame, bg=col_chat_titles_frame)
 chat_titles_frame.pack(fill="x")
 
 # Configure the chat titles frame to resize with the canvas
@@ -365,6 +366,8 @@ def generate_response(chat_window, user_message, typing_indicator_label):
 
 # Function to create a new chat tab
 def create_chat_tab():
+    global selected_chat_tab  # Access the global variable to update it
+
     chat_title = "Chat " + str(tab_manager.index("end"))
     chat_contents[chat_title] = []  # Initialize empty chat content for the new chat tab
 
@@ -389,7 +392,7 @@ def create_chat_tab():
     send_button.pack(side="left")
 
     # Create the footer label
-    footer_label = tk.Label(chat_tab, text="Free Research Preview. AIConverse may produce inaccurate information about people, places, or facts. AIConverse July 07 Version", bg="#F0F0F0", fg="#888888")
+    footer_label = tk.Label(chat_tab, text="Free Research Preview. AIConverse may produce inaccurate information about people, places, or facts. AIConverse July 20 Version", bg="#F0F0F0", fg="#888888")
     footer_label.pack(side="top")
 
     # Create the typing indicator label for the tab
@@ -405,14 +408,22 @@ def create_chat_tab():
         display_chat_content(chat_window, chat_contents[chat_title])
         generate_response(chat_window, user_message, typing_indicator_label)
 
-    # Add the chat tab to the tab manager
+     # Add the chat tab to the tab manager
     tab_manager.add(chat_tab, text=chat_title)
 
-    # Set the newly created chat tab as the active tab
+    # Select the newly created chat tab and update the selected_chat_tab
     tab_manager.select(chat_tab)
+    selected_chat_tab = chat_tab
 
     # Update the chat options section with the new chat tab
     create_chat_option(chat_title)
+
+    # Highlight the selected chat option in the chat titles section
+    for chat_option_frame in chat_titles_frame.winfo_children():
+        if chat_option_frame.winfo_children()[0]['text'] == chat_title:
+            chat_option_frame.configure(bg=col_selected_chat_tab)
+        else:
+            chat_option_frame.configure(bg=col_chat_option_frame)
 
 # Function to create a chat option in the chat options section
 def create_chat_option(chat_title):
@@ -478,10 +489,24 @@ def create_chat_option(chat_title):
 
 # Function to switch to a specific chat tab
 def switch_chat_tab(chat_title):
+    global selected_chat_tab  # Access the global variable to update it
+
     for tab in tab_manager.tabs():
         if tab_manager.tab(tab, "text") == chat_title:
             tab_manager.select(tab)
+            selected_chat_tab = tab  # Update the selected_chat_tab with the reference to the selected chat tab
+
+            # Highlight the selected chat option
+            for chat_option_frame in chat_titles_frame.winfo_children():
+                if chat_option_frame.winfo_children()[0]['text'] == chat_title:
+                    chat_option_frame.configure(bg=col_selected_chat_tab)
+                else:
+                    chat_option_frame.configure(bg=col_chat_option_frame)
             break
+
+# Set the first chat option as the selected option when the application starts
+if chat_titles_frame.winfo_children():
+    chat_titles_frame.winfo_children()[0].configure(bg=col_selected_chat_tab)
 
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>Default Tab>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
