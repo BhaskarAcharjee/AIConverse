@@ -273,8 +273,8 @@ def start_new_chat():
     create_chat_tab()
 
 # Create a frame to contain the buttons
-buttons_frame = tk.Frame(options_frame, bg=col_buttons_frame)
-buttons_frame.pack(fill="x")
+buttons_frame = tk.Frame(left_panel, bg=col_buttons_frame)
+buttons_frame.pack(fill="x", padx=10, pady=10)
 
 # Create the new chat button
 chat_button = ttk.Button(buttons_frame, text="New Chat", command=start_new_chat, width=28)
@@ -290,16 +290,12 @@ def toggle_sidebar():
         hide_sidebar_button.configure(text="◀")
 
 # Create the hide sidebar button
-hide_sidebar_button = ttk.Button(buttons_frame, text="◀", command=toggle_sidebar,width=5)
-hide_sidebar_button.pack(side="left", padx=0, pady=10)
+hide_sidebar_button = ttk.Button(buttons_frame, text="◀", command=toggle_sidebar, width=5)
+hide_sidebar_button.pack(side="left", padx=10, pady=10)
 
 # Create the chat titles section
-chat_titles_frame = tk.Frame(options_frame, bg=col_chat_titles_frame)
+chat_titles_frame = tk.Frame(options_frame, bg=col_chat_titles_frame, width=45)
 chat_titles_frame.pack(fill="x")
-
-# Create the chat titles scrollbar
-chat_titles_scrollbar = ttk.Scrollbar(chat_titles_frame, orient="vertical", command=options_canvas.yview)
-chat_titles_scrollbar.pack(side="right", fill="y")
 
 # Configure the chat titles frame to resize with the canvas
 def configure_chat_titles_frame(event):
@@ -427,8 +423,8 @@ def create_chat_option(chat_title):
     def switch_chat(event):
         switch_chat_tab(chat_title)
 
-    chat_option_label = tk.Label(chat_option_frame, text=chat_title, bg=col_chat_option_label, width=17, anchor="w")
-    chat_option_label.pack(side="left", pady=5)
+    chat_option_label = tk.Label(chat_option_frame, text=chat_title, bg=col_chat_option_label, width=19, anchor="w")
+    chat_option_label.pack(side="left", padx=5, pady=5)
     chat_option_label.bind("<Button-1>", switch_chat)
 
 
@@ -487,72 +483,63 @@ def switch_chat_tab(chat_title):
             tab_manager.select(tab)
             break
 
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>Default Tab>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 # Create the default screen content
 default_tab = tk.Frame(tab_manager)
 default_tab.pack(fill="both", expand=True)
 
-default_label = tk.Label(default_tab, text="Welcome to AIConverse!", font=("Arial", 16, "bold"), pady=100)
-default_label.pack()
+# Create a container frame to hold the welcome label and Examples, Capabilities, and Limitations label frames
+content_frame = tk.Frame(default_tab, bg=col_right_panel)
+content_frame.pack(fill="both", expand=True)
 
-tab_manager.add(default_tab, text="Home")
+# Add the welcome label
+welcome_label = tk.Label(content_frame, text="Welcome to AIConverse!", font=("Arial", 16, "bold"), bg=col_right_panel)
+welcome_label.grid(row=0, column=0, columnspan=3, padx=20, pady=20, sticky="ew")
 
-# Dummy data for examples
+# Create LabelFrames for Examples, Capabilities, and Limitations
+examples_frame = tk.LabelFrame(content_frame, text="Examples", font=("Arial", 16, "bold"), bg=col_right_panel)
+examples_frame.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+
+capabilities_frame = tk.LabelFrame(content_frame, text="Capabilities", font=("Arial", 16, "bold"), bg=col_right_panel)
+capabilities_frame.grid(row=1, column=1, padx=20, pady=10, sticky="nsew")
+
+limitations_frame = tk.LabelFrame(content_frame, text="Limitations", font=("Arial", 16, "bold"), bg=col_right_panel)
+limitations_frame.grid(row=1, column=2, padx=20, pady=10, sticky="nsew")
+
+# Add the content to the Examples tab
 examples = [
     "Explain quantum computing in simple terms",
-    "Got any creative ideas for a 10 year old’s birthday?",
+    "Got any creative ideas for a 10-year-old’s birthday?",
     "How do I make an HTTP request in Javascript?",
 ]
 
+for i, example in enumerate(examples, start=1):
+    example_label = tk.Label(examples_frame, text=example, font=("Arial", 12), bg=col_right_panel, anchor="w")
+    example_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
+
+# Add the content to the Capabilities tab
 capabilities = [
     "Tell me a joke",
     "Translate English to French",
     "Explain the concept of machine learning",
 ]
 
+for i, capability in enumerate(capabilities, start=1):
+    capability_label = tk.Label(capabilities_frame, text=capability, font=("Arial", 12), bg=col_right_panel, anchor="w")
+    capability_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
+
+# Add the content to the Limitations tab
 limitations = [
     "May produce inaccurate information",
     "Does not always ask clarifying questions",
     "Sensitive to input phrasing",
 ]
 
-# Create the Examples tab
-examples_tab = tk.Frame(tab_manager)
-examples_tab.pack(fill="both", expand=True)
+for i, limitation in enumerate(limitations, start=1):
+    limitation_label = tk.Label(limitations_frame, text=limitation, font=("Arial", 12), bg=col_right_panel, anchor="w")
+    limitation_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
 
-examples_label = tk.Label(examples_tab, text="Examples", font=("Arial", 16, "bold"), pady=100)
-examples_label.pack()
-
-for example in examples:
-    example_label = tk.Label(examples_tab, text=example, font=("Arial", 12), pady=10)
-    example_label.pack()
-
-tab_manager.add(examples_tab, text="Examples")
-
-# Create the Capabilities tab
-capabilities_tab = tk.Frame(tab_manager)
-capabilities_tab.pack(fill="both", expand=True)
-
-capabilities_label = tk.Label(capabilities_tab, text="Capabilities", font=("Arial", 16, "bold"), pady=100)
-capabilities_label.pack()
-
-for capability in capabilities:
-    capability_label = tk.Label(capabilities_tab, text=capability, font=("Arial", 12), pady=10)
-    capability_label.pack()
-
-tab_manager.add(capabilities_tab, text="Capabilities")
-
-# Create the Limitations tab
-limitations_tab = tk.Frame(tab_manager)
-limitations_tab.pack(fill="both", expand=True)
-
-limitations_label = tk.Label(limitations_tab, text="Limitations", font=("Arial", 16, "bold"), pady=100)
-limitations_label.pack()
-
-for limitation in limitations:
-    limitation_label = tk.Label(limitations_tab, text=limitation, font=("Arial", 12), pady=10)
-    limitation_label.pack()
-
-tab_manager.add(limitations_tab, text="Limitations")
 
 # --------------end-------------
 
