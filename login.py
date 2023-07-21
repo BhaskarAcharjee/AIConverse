@@ -3,13 +3,7 @@ from tkinter import ttk
 import tkinter.messagebox as messagebox
 import hashlib
 from AIConverse import create_main_application_window
-from shared_data import user_data
-
-# Sample login credentials (for demonstration purposes only)
-valid_credentials = {
-    "user123": "482c811da5d5b4bc6d497ffa98491e38",  # hashed "password123"
-    "bhaskar": "656871241f3a30bd66b171dda2148cd8",  # hashed "bhaskar123"
-}
+from shared_data import valid_credentials, user_data
 
 # Global variables for user registration
 global login_window, registration_step, username_entry, password_entry, first_name_entry, last_name_entry

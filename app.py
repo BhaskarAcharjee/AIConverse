@@ -1,7 +1,9 @@
-from login import create_login_window
+import tkinter as tk
+from tkinter import ttk
+import tkinter.messagebox as messagebox
 from AIConverse import create_main_application_window
-
-logged_in_user = None
+from login import create_login_window
+from shared_data import logged_in_user
 
 def main():
     # Start with the login window

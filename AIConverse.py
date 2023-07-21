@@ -2,12 +2,10 @@ import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog
 import tkinter.messagebox as messagebox
 import time
-from shared_data import user_data
+from shared_data import user_data, logged_in_user
 
 # Function to create the main application window
 def create_main_application_window():
-
-    #>>>>>>>>>>>>>>>>>>>>>>>>>>>Basic Architecture>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     # Create the main window
     global window
@@ -33,6 +31,7 @@ def create_main_application_window():
     col_chat_option_label = "#F0F0F0"
     col_selected_chat_tab = "#D0D0D0"
 
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>> Basic Architecture <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     # Create the left panel for chat options
     left_panel = tk.Frame(window, width=200, bg=col_left_panel)
@@ -50,12 +49,317 @@ def create_main_application_window():
     # Position the tab manager in the right panel
     tab_manager.pack(fill="both", expand=True)
 
-
-    #>>>>>>>>>>>>>>>>>>>>>>>>>>>Profile Section>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>> Left Panel Chat Titles <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     # Create the profile section
     profile_frame = tk.Frame(left_panel, bg=col_profile_frame, pady=10)
     profile_frame.pack(fill="x", side="bottom")
+
+    # Create the chat options section
+    options_canvas = tk.Canvas(left_panel, bg=col_options_canvas, width=200)
+    options_frame = tk.Frame(options_canvas, bg=col_options_frame)
+    options_scrollbar = ttk.Scrollbar(left_panel, orient="vertical", command=options_canvas.yview)
+
+    options_canvas.create_window((0, 0), window=options_frame, anchor="nw")
+    options_canvas.configure(yscrollcommand=options_scrollbar.set)
+
+    # Create the new chat button
+    def start_new_chat():
+        create_chat_tab()
+
+    # Create a frame to contain the buttons
+    buttons_frame = tk.Frame(left_panel, bg=col_buttons_frame)
+    buttons_frame.pack(fill="x", padx=10, pady=10)
+
+    # Create the new chat button
+    chat_button = ttk.Button(buttons_frame, text="New Chat", command=start_new_chat, width=28)
+    chat_button.pack(side="left", padx=0, pady=10)
+
+    # Function to toggle the sidebar visibility
+    def toggle_sidebar():
+        if left_panel.winfo_ismapped():
+            left_panel.pack_forget()
+            hide_sidebar_button.configure(text="▶")
+        else:
+            left_panel.pack(side="left", fill="y")
+            hide_sidebar_button.configure(text="◀")
+
+    # Create the hide sidebar button
+    hide_sidebar_button = ttk.Button(buttons_frame, text="◀", command=toggle_sidebar, width=5)
+    hide_sidebar_button.pack(side="left", padx=10, pady=10)
+
+    # Create the chat titles section
+    chat_titles_frame = tk.Frame(options_frame, bg=col_chat_titles_frame)
+    chat_titles_frame.pack(fill="x")
+
+    # Configure the chat titles frame to resize with the canvas
+    def configure_chat_titles_frame(event):
+        options_canvas.configure(scrollregion=options_canvas.bbox("all"))
+
+    chat_titles_frame.bind("<Configure>", configure_chat_titles_frame)
+
+    # Configure the options canvas to scroll the chat titles frame
+    def configure_canvas(event):
+        options_canvas.configure(scrollregion=options_canvas.bbox("all"))
+
+    options_frame.bind("<Configure>", configure_canvas)
+
+    options_canvas.pack(side="left", fill="both", expand=True)
+    options_scrollbar.pack(side="right", fill="y")
+
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>> Chat Tab Section <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    # Create a dictionary to store chat contents for each tab
+    chat_contents = {}
+
+    # Function to create a new chat tab
+    def create_chat_tab():
+        global selected_chat_tab  # Access the global variable to update it
+
+        chat_title = "Chat " + str(tab_manager.index("end"))
+        chat_contents[chat_title] = []  # Initialize empty chat content for the new chat tab
+
+        # Create a new chat tab
+        chat_tab = tk.Frame(tab_manager)
+        chat_tab.pack(fill="both", expand=True)
+
+        # Create the chat window for the tab
+        chat_window = tk.Text(chat_tab, width=80, height=30)
+        chat_window.configure(state='disabled')
+        chat_window.pack(fill="both", expand=True)
+
+        # Create the user input box and send button for the tab
+        user_input_frame = tk.Frame(chat_tab)
+        user_input_frame.pack(side="top", pady=6)
+
+        user_input = tk.Entry(user_input_frame, width=90, font=("Arial", 10), bd=5)
+        user_input.pack(side="left", pady=6)
+
+        # Create the send button
+        send_button = ttk.Button(user_input_frame, text="Send", command=lambda: handle_user_input(chat_window, user_input))
+        send_button.pack(side="left")
+
+        # Create the footer label
+        footer_label = tk.Label(chat_tab, text="Free Research Preview. AIConverse may produce inaccurate information about people, places, or facts. AIConverse July 20 Version", bg="#F0F0F0", fg="#888888")
+        footer_label.pack(side="top")
+
+        # Create the typing indicator label for the tab
+        typing_indicator_label = tk.Label(chat_tab, text="", bg=col_typing_indicator_label)
+        typing_indicator_label.pack(side="bottom")
+
+
+        # Function to handle user input for the tab
+        def handle_user_input(chat_window, user_input):
+            user_message = user_input.get()
+            user_input.delete(0, tk.END)
+            chat_contents[chat_title].append(("You", user_message, time.time()))
+            display_chat_content(chat_window, chat_contents[chat_title])
+            generate_response(chat_window, user_message, typing_indicator_label)
+
+        # Add the chat tab to the tab manager
+        tab_manager.add(chat_tab, text=chat_title)
+
+        # Select the newly created chat tab and update the selected_chat_tab
+        tab_manager.select(chat_tab)
+        selected_chat_tab = chat_tab
+
+        # Update the chat options section with the new chat tab
+        create_chat_option(chat_title)
+
+        # Highlight the selected chat option in the chat titles section
+        for chat_option_frame in chat_titles_frame.winfo_children():
+            if chat_option_frame.winfo_children()[0]['text'] == chat_title:
+                chat_option_frame.configure(bg=col_selected_chat_tab)
+            else:
+                chat_option_frame.configure(bg=col_chat_option_frame)
+
+    # Function to create a chat option in the chat options section
+    def create_chat_option(chat_title):
+        chat_option_frame = tk.Frame(chat_titles_frame, bg=col_chat_option_frame)
+        chat_option_frame.pack(fill="x")
+
+        # Function to switch to the corresponding chat tab
+        def switch_chat(event):
+            switch_chat_tab(chat_title)
+
+        chat_option_label = tk.Label(chat_option_frame, text=chat_title, bg=col_chat_option_label, width=19, anchor="w")
+        chat_option_label.pack(side="left", padx=5, pady=5)
+        chat_option_label.bind("<Button-1>", switch_chat)
+
+
+        # Reference to the selected chat tab
+        selected_chat_tab = None
+
+        # Function to rename the chat tab
+        def rename_chat():
+            nonlocal selected_chat_tab  # Update the reference to the selected chat tab
+
+            new_chat_title = simpledialog.askstring("Rename Chat", "Enter a new chat title:")
+            if new_chat_title:
+                chat_option_label.configure(text=new_chat_title)
+                tab_manager.tab(selected_chat_tab, text=new_chat_title)
+                
+                # Rename the chat title in the chat_contents dictionary
+                old_chat_title = tab_manager.tab(selected_chat_tab, "text")
+                chat_contents[new_chat_title] = chat_contents.pop(old_chat_title)
+
+                selected_chat_tab = None  # Reset the selected chat tab
+
+        rename_button = ttk.Button(chat_option_frame, text="🖊️", width=3, command=rename_chat)
+        rename_button.pack(side="left")
+
+        # Function to export the chat
+        def export_chat():
+            # Ask for the file name
+            file_name = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+            if file_name:
+                with open(file_name, "w") as file:
+                    for chat in chat_contents[chat_title]:
+                        user, message, timestamp = chat
+                        timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+                        file.write(f"{timestamp_str} - {user}: {message}\n")
+
+        export_button = ttk.Button(chat_option_frame, text="💾", width=3, command=export_chat)
+        export_button.pack(side="left")
+
+        # Function to delete the chat tab and associated chat option
+        def delete_chat():
+            for tab in tab_manager.tabs():
+                if tab_manager.tab(tab, "text") == chat_title:
+                    tab_manager.forget(tab)
+                    del chat_contents[chat_title]
+                    chat_option_frame.destroy()
+                    break
+
+        delete_button = ttk.Button(chat_option_frame, text="🗑️", width=3, command=delete_chat)
+        delete_button.pack(side="left")
+
+
+    # Function to switch to a specific chat tab
+    def switch_chat_tab(chat_title):
+        global selected_chat_tab  # Access the global variable to update it
+
+        for tab in tab_manager.tabs():
+            if tab_manager.tab(tab, "text") == chat_title:
+                tab_manager.select(tab)
+                selected_chat_tab = tab  # Update the selected_chat_tab with the reference to the selected chat tab
+
+                # Highlight the selected chat option
+                for chat_option_frame in chat_titles_frame.winfo_children():
+                    if chat_option_frame.winfo_children()[0]['text'] == chat_title:
+                        chat_option_frame.configure(bg=col_selected_chat_tab)
+                    else:
+                        chat_option_frame.configure(bg=col_chat_option_frame)
+                break
+
+    # Set the first chat option as the selected option when the application starts
+    if chat_titles_frame.winfo_children():
+        chat_titles_frame.winfo_children()[0].configure(bg=col_selected_chat_tab)
+
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>> Chat Display Section <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    # Function to generate a response from the AI
+    def generate_response(chat_window, user_message, typing_indicator_label):
+        # Show typing indicator
+        typing_indicator_label.configure(text="AI is typing...")
+
+        # TODO: Implement your AI response generation logic here
+        # Replace the code below with your own AI response generation code
+        response = "This is a sample response from the AI."
+
+        # Hide typing indicator
+        typing_indicator_label.configure(text="")
+
+        chat_contents[tab_manager.tab(tab_manager.select(), "text")].append(("AI", response, time.time()))
+        display_chat_content(chat_window, chat_contents[tab_manager.tab(tab_manager.select(), "text")])
+
+    # Function to display the chat content in the chat window
+    def display_chat_content(chat_window, content):
+        chat_window.configure(state='normal')
+        chat_window.delete("1.0", tk.END)  # Clear previous content
+
+        for chat in content:
+            user, message, timestamp = chat
+            timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+
+            # Create a chat bubble based on the user
+            if user == "You":
+                chat_window.insert(tk.END, f"{timestamp_str}\n", "timestamp")
+                chat_window.insert(tk.END, f"You:\n", "user_label")
+                chat_window.insert(tk.END, f"{message}\n\n", "user_bubble")
+            else:
+                chat_window.insert(tk.END, f"{timestamp_str}\n", "timestamp")
+                chat_window.insert(tk.END, f"AI:\n", "ai_label")
+                chat_window.insert(tk.END, f"{message}\n\n", "ai_bubble")
+
+        chat_window.configure(state='disabled')
+        chat_window.see(tk.END)  # Scroll to the bottom of the chat window
+
+        # Configure tags for chat bubbles and labels
+        chat_window.tag_configure("timestamp", font=("Arial", 8, "italic"), foreground="#999999")
+        chat_window.tag_configure("user_label", font=("Arial", 10, "bold"), foreground="#0084FF")
+        chat_window.tag_configure("user_bubble", background="#DCF8C6", foreground="#000000", font=("Arial", 12))
+        chat_window.tag_configure("ai_label", font=("Arial", 10, "bold"), foreground="#FF6767")
+        chat_window.tag_configure("ai_bubble", background="#E8E8E8", foreground="#000000", font=("Arial", 12))
+
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>> Default Tab <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    # Create the default screen content
+    default_tab = tk.Frame(tab_manager)
+    default_tab.pack(fill="both", expand=True)
+
+    # Create a container frame to hold the welcome label and Examples, Capabilities, and Limitations label frames
+    content_frame = tk.Frame(default_tab, bg=col_right_panel)
+    content_frame.pack(fill="both", expand=True)
+
+    # Add the welcome label
+    welcome_label = tk.Label(content_frame, text="Welcome to AIConverse!", font=("Arial", 18, "bold"), bg=col_right_panel)
+    welcome_label.grid(row=0, column=0, columnspan=3, pady=150, sticky="ew")
+
+    # Create LabelFrames for Examples, Capabilities, and Limitations
+    examples_frame = tk.LabelFrame(content_frame, text="Examples", font=("Arial", 16, "bold"), bg=col_right_panel)
+    examples_frame.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+
+    capabilities_frame = tk.LabelFrame(content_frame, text="Capabilities", font=("Arial", 16, "bold"), bg=col_right_panel)
+    capabilities_frame.grid(row=1, column=1, padx=20, pady=10, sticky="nsew")
+
+    limitations_frame = tk.LabelFrame(content_frame, text="Limitations", font=("Arial", 16, "bold"), bg=col_right_panel)
+    limitations_frame.grid(row=1, column=2, padx=20, pady=10, sticky="nsew")
+
+    # Add the content to the Examples tab
+    examples = [
+        "Explain quantum computing in simple terms",
+        "Got any creative ideas for a 10-year-old’s birthday?",
+        "How do I make an HTTP request in Javascript?",
+    ]
+
+    for i, example in enumerate(examples, start=1):
+        example_label = tk.Label(examples_frame, text=example, font=("Arial", 12), bg=col_right_panel, anchor="w")
+        example_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
+
+    # Add the content to the Capabilities tab
+    capabilities = [
+        "Tell me a joke",
+        "Translate English to French",
+        "Explain the concept of machine learning",
+    ]
+
+    for i, capability in enumerate(capabilities, start=1):
+        capability_label = tk.Label(capabilities_frame, text=capability, font=("Arial", 12), bg=col_right_panel, anchor="w")
+        capability_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
+
+    # Add the content to the Limitations tab
+    limitations = [
+        "May produce inaccurate information",
+        "Does not always ask clarifying questions",
+        "Sensitive to input phrasing",
+    ]
+
+    for i, limitation in enumerate(limitations, start=1):
+        limitation_label = tk.Label(limitations_frame, text=limitation, font=("Arial", 12), bg=col_right_panel, anchor="w")
+        limitation_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
+
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>> Profile Section <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     # Create the profile image
     first_name_initial = user_data.get("first_name", "")[:1].upper()
@@ -119,7 +423,7 @@ def create_main_application_window():
     # Bind the profile options button to show the profile options
     profile_options_button.bind("<Button-1>", lambda event: show_profile_options())
 
-    # Function to clear conversations
+    # Function to clear conversations (**issue**)
     def clear_conversations():
         result = messagebox.askquestion("Clear Conversations", "Are you sure you want to clear all conversations?")
         if result == "yes":
@@ -276,314 +580,10 @@ def create_main_application_window():
         if result == "yes":
             # Perform logout actions
             window.destroy()
-            # Add your logout code here
 
-
-    #>>>>>>>>>>>>>>>>>>>>>>>>>>>Left Panel Chat Titles>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    # Create the chat options section
-    options_canvas = tk.Canvas(left_panel, bg=col_options_canvas, width=200)
-    options_frame = tk.Frame(options_canvas, bg=col_options_frame)
-    options_scrollbar = ttk.Scrollbar(left_panel, orient="vertical", command=options_canvas.yview)
-
-    options_canvas.create_window((0, 0), window=options_frame, anchor="nw")
-    options_canvas.configure(yscrollcommand=options_scrollbar.set)
-
-    # Create the new chat button
-    def start_new_chat():
-        create_chat_tab()
-
-    # Create a frame to contain the buttons
-    buttons_frame = tk.Frame(left_panel, bg=col_buttons_frame)
-    buttons_frame.pack(fill="x", padx=10, pady=10)
-
-    # Create the new chat button
-    chat_button = ttk.Button(buttons_frame, text="New Chat", command=start_new_chat, width=28)
-    chat_button.pack(side="left", padx=0, pady=10)
-
-    # Function to toggle the sidebar visibility
-    def toggle_sidebar():
-        if left_panel.winfo_ismapped():
-            left_panel.pack_forget()
-            hide_sidebar_button.configure(text="▶")
-        else:
-            left_panel.pack(side="left", fill="y")
-            hide_sidebar_button.configure(text="◀")
-
-    # Create the hide sidebar button
-    hide_sidebar_button = ttk.Button(buttons_frame, text="◀", command=toggle_sidebar, width=5)
-    hide_sidebar_button.pack(side="left", padx=10, pady=10)
-
-    # Create the chat titles section
-    chat_titles_frame = tk.Frame(options_frame, bg=col_chat_titles_frame)
-    chat_titles_frame.pack(fill="x")
-
-    # Configure the chat titles frame to resize with the canvas
-    def configure_chat_titles_frame(event):
-        options_canvas.configure(scrollregion=options_canvas.bbox("all"))
-
-    chat_titles_frame.bind("<Configure>", configure_chat_titles_frame)
-
-    # Configure the options canvas to scroll the chat titles frame
-    def configure_canvas(event):
-        options_canvas.configure(scrollregion=options_canvas.bbox("all"))
-
-    options_frame.bind("<Configure>", configure_canvas)
-
-    options_canvas.pack(side="left", fill="both", expand=True)
-    options_scrollbar.pack(side="right", fill="y")
-
-    #>>>>>>>>>>>>>>>>>>>>>>>>>>>Chat Display Section>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    # Create a dictionary to store chat contents for each tab
-    chat_contents = {}
-
-    # Function to display the chat content in the chat window
-    def display_chat_content(chat_window, content):
-        chat_window.configure(state='normal')
-        chat_window.delete("1.0", tk.END)  # Clear previous content
-
-        for chat in content:
-            user, message, timestamp = chat
-            timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
-
-            # Create a chat bubble based on the user
-            if user == "You":
-                chat_window.insert(tk.END, f"{timestamp_str}\n", "timestamp")
-                chat_window.insert(tk.END, f"You:\n", "user_label")
-                chat_window.insert(tk.END, f"{message}\n\n", "user_bubble")
-            else:
-                chat_window.insert(tk.END, f"{timestamp_str}\n", "timestamp")
-                chat_window.insert(tk.END, f"AI:\n", "ai_label")
-                chat_window.insert(tk.END, f"{message}\n\n", "ai_bubble")
-
-        chat_window.configure(state='disabled')
-        chat_window.see(tk.END)  # Scroll to the bottom of the chat window
-
-        # Configure tags for chat bubbles and labels
-        chat_window.tag_configure("timestamp", font=("Arial", 8, "italic"), foreground="#999999")
-        chat_window.tag_configure("user_label", font=("Arial", 10, "bold"), foreground="#0084FF")
-        chat_window.tag_configure("user_bubble", background="#DCF8C6", foreground="#000000", font=("Arial", 12))
-        chat_window.tag_configure("ai_label", font=("Arial", 10, "bold"), foreground="#FF6767")
-        chat_window.tag_configure("ai_bubble", background="#E8E8E8", foreground="#000000", font=("Arial", 12))
-
-    # Function to generate a response from the AI
-    def generate_response(chat_window, user_message, typing_indicator_label):
-        # Show typing indicator
-        typing_indicator_label.configure(text="AI is typing...")
-
-        # TODO: Implement your AI response generation logic here
-        # Replace the code below with your own AI response generation code
-        response = "This is a sample response from the AI."
-
-        # Hide typing indicator
-        typing_indicator_label.configure(text="")
-
-        chat_contents[tab_manager.tab(tab_manager.select(), "text")].append(("AI", response, time.time()))
-        display_chat_content(chat_window, chat_contents[tab_manager.tab(tab_manager.select(), "text")])
-
-    #>>>>>>>>>>>>>>>>>>>>>>>>>>>Chat Tab Section>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    # Function to create a new chat tab
-    def create_chat_tab():
-        global selected_chat_tab  # Access the global variable to update it
-
-        chat_title = "Chat " + str(tab_manager.index("end"))
-        chat_contents[chat_title] = []  # Initialize empty chat content for the new chat tab
-
-        # Create a new chat tab
-        chat_tab = tk.Frame(tab_manager)
-        chat_tab.pack(fill="both", expand=True)
-
-        # Create the chat window for the tab
-        chat_window = tk.Text(chat_tab, width=80, height=30)
-        chat_window.configure(state='disabled')
-        chat_window.pack(fill="both", expand=True)
-
-        # Create the user input box and send button for the tab
-        user_input_frame = tk.Frame(chat_tab)
-        user_input_frame.pack(side="top", pady=6)
-
-        user_input = tk.Entry(user_input_frame, width=90, font=("Arial", 10), bd=5)
-        user_input.pack(side="left", pady=6)
-
-        # Create the send button
-        send_button = ttk.Button(user_input_frame, text="Send", command=lambda: handle_user_input(chat_window, user_input))
-        send_button.pack(side="left")
-
-        # Create the footer label
-        footer_label = tk.Label(chat_tab, text="Free Research Preview. AIConverse may produce inaccurate information about people, places, or facts. AIConverse July 20 Version", bg="#F0F0F0", fg="#888888")
-        footer_label.pack(side="top")
-
-        # Create the typing indicator label for the tab
-        typing_indicator_label = tk.Label(chat_tab, text="", bg=col_typing_indicator_label)
-        typing_indicator_label.pack(side="bottom")
-
-
-        # Function to handle user input for the tab
-        def handle_user_input(chat_window, user_input):
-            user_message = user_input.get()
-            user_input.delete(0, tk.END)
-            chat_contents[chat_title].append(("You", user_message, time.time()))
-            display_chat_content(chat_window, chat_contents[chat_title])
-            generate_response(chat_window, user_message, typing_indicator_label)
-
-        # Add the chat tab to the tab manager
-        tab_manager.add(chat_tab, text=chat_title)
-
-        # Select the newly created chat tab and update the selected_chat_tab
-        tab_manager.select(chat_tab)
-        selected_chat_tab = chat_tab
-
-        # Update the chat options section with the new chat tab
-        create_chat_option(chat_title)
-
-        # Highlight the selected chat option in the chat titles section
-        for chat_option_frame in chat_titles_frame.winfo_children():
-            if chat_option_frame.winfo_children()[0]['text'] == chat_title:
-                chat_option_frame.configure(bg=col_selected_chat_tab)
-            else:
-                chat_option_frame.configure(bg=col_chat_option_frame)
-
-    # Function to create a chat option in the chat options section
-    def create_chat_option(chat_title):
-        chat_option_frame = tk.Frame(chat_titles_frame, bg=col_chat_option_frame)
-        chat_option_frame.pack(fill="x")
-
-        # Function to switch to the corresponding chat tab
-        def switch_chat(event):
-            switch_chat_tab(chat_title)
-
-        chat_option_label = tk.Label(chat_option_frame, text=chat_title, bg=col_chat_option_label, width=19, anchor="w")
-        chat_option_label.pack(side="left", padx=5, pady=5)
-        chat_option_label.bind("<Button-1>", switch_chat)
-
-
-        # Reference to the selected chat tab
-        selected_chat_tab = None
-
-        # Function to rename the chat tab
-        def rename_chat():
-            nonlocal selected_chat_tab  # Update the reference to the selected chat tab
-
-            new_chat_title = simpledialog.askstring("Rename Chat", "Enter a new chat title:")
-            if new_chat_title:
-                chat_option_label.configure(text=new_chat_title)
-                tab_manager.tab(selected_chat_tab, text=new_chat_title)
-                
-                # Rename the chat title in the chat_contents dictionary
-                old_chat_title = tab_manager.tab(selected_chat_tab, "text")
-                chat_contents[new_chat_title] = chat_contents.pop(old_chat_title)
-
-                selected_chat_tab = None  # Reset the selected chat tab
-
-        rename_button = ttk.Button(chat_option_frame, text="🖊️", width=3, command=rename_chat)
-        rename_button.pack(side="left")
-
-        # Function to export the chat
-        def export_chat():
-            # Ask for the file name
-            file_name = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
-            if file_name:
-                with open(file_name, "w") as file:
-                    for chat in chat_contents[chat_title]:
-                        user, message, timestamp = chat
-                        timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
-                        file.write(f"{timestamp_str} - {user}: {message}\n")
-
-        export_button = ttk.Button(chat_option_frame, text="💾", width=3, command=export_chat)
-        export_button.pack(side="left")
-
-        # Function to delete the chat tab and associated chat option
-        def delete_chat():
-            for tab in tab_manager.tabs():
-                if tab_manager.tab(tab, "text") == chat_title:
-                    tab_manager.forget(tab)
-                    del chat_contents[chat_title]
-                    chat_option_frame.destroy()
-                    break
-
-        delete_button = ttk.Button(chat_option_frame, text="🗑️", width=3, command=delete_chat)
-        delete_button.pack(side="left")
-
-
-    # Function to switch to a specific chat tab
-    def switch_chat_tab(chat_title):
-        global selected_chat_tab  # Access the global variable to update it
-
-        for tab in tab_manager.tabs():
-            if tab_manager.tab(tab, "text") == chat_title:
-                tab_manager.select(tab)
-                selected_chat_tab = tab  # Update the selected_chat_tab with the reference to the selected chat tab
-
-                # Highlight the selected chat option
-                for chat_option_frame in chat_titles_frame.winfo_children():
-                    if chat_option_frame.winfo_children()[0]['text'] == chat_title:
-                        chat_option_frame.configure(bg=col_selected_chat_tab)
-                    else:
-                        chat_option_frame.configure(bg=col_chat_option_frame)
-                break
-
-    # Set the first chat option as the selected option when the application starts
-    if chat_titles_frame.winfo_children():
-        chat_titles_frame.winfo_children()[0].configure(bg=col_selected_chat_tab)
-
-    #>>>>>>>>>>>>>>>>>>>>>>>>>>>Default Tab>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    # Create the default screen content
-    default_tab = tk.Frame(tab_manager)
-    default_tab.pack(fill="both", expand=True)
-
-    # Create a container frame to hold the welcome label and Examples, Capabilities, and Limitations label frames
-    content_frame = tk.Frame(default_tab, bg=col_right_panel)
-    content_frame.pack(fill="both", expand=True)
-
-    # Add the welcome label
-    welcome_label = tk.Label(content_frame, text="Welcome to AIConverse!", font=("Arial", 18, "bold"), bg=col_right_panel)
-    welcome_label.grid(row=0, column=0, columnspan=3, pady=150, sticky="ew")
-
-    # Create LabelFrames for Examples, Capabilities, and Limitations
-    examples_frame = tk.LabelFrame(content_frame, text="Examples", font=("Arial", 16, "bold"), bg=col_right_panel)
-    examples_frame.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
-
-    capabilities_frame = tk.LabelFrame(content_frame, text="Capabilities", font=("Arial", 16, "bold"), bg=col_right_panel)
-    capabilities_frame.grid(row=1, column=1, padx=20, pady=10, sticky="nsew")
-
-    limitations_frame = tk.LabelFrame(content_frame, text="Limitations", font=("Arial", 16, "bold"), bg=col_right_panel)
-    limitations_frame.grid(row=1, column=2, padx=20, pady=10, sticky="nsew")
-
-    # Add the content to the Examples tab
-    examples = [
-        "Explain quantum computing in simple terms",
-        "Got any creative ideas for a 10-year-old’s birthday?",
-        "How do I make an HTTP request in Javascript?",
-    ]
-
-    for i, example in enumerate(examples, start=1):
-        example_label = tk.Label(examples_frame, text=example, font=("Arial", 12), bg=col_right_panel, anchor="w")
-        example_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
-
-    # Add the content to the Capabilities tab
-    capabilities = [
-        "Tell me a joke",
-        "Translate English to French",
-        "Explain the concept of machine learning",
-    ]
-
-    for i, capability in enumerate(capabilities, start=1):
-        capability_label = tk.Label(capabilities_frame, text=capability, font=("Arial", 12), bg=col_right_panel, anchor="w")
-        capability_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
-
-    # Add the content to the Limitations tab
-    limitations = [
-        "May produce inaccurate information",
-        "Does not always ask clarifying questions",
-        "Sensitive to input phrasing",
-    ]
-
-    for i, limitation in enumerate(limitations, start=1):
-        limitation_label = tk.Label(limitations_frame, text=limitation, font=("Arial", 12), bg=col_right_panel, anchor="w")
-        limitation_label.grid(row=i, column=0, padx=20, pady=5, sticky="w")
+            # After closing the main window, you can call the main() function again to rerun the application
+            import app
+            app.main()
 
 
     # --------------end-------------
