@@ -116,11 +116,12 @@ def create_main_application_window():
     #>>>>>>>>>>>>>>>>>>>>>>>>>>> Chat Tab Section <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     # Function to create a new chat tab
-    def create_chat_tab(chat_content):
+    def create_chat_tab(chat_content, chat_title=None):
         global selected_chat_tab  # Access the global variable to update it
 
-        chat_title = "Chat " + str(tab_manager.index("end"))
-        # chat_content = user_data["chat_contents"].get(chat_title, [])
+        if chat_title is None:
+            chat_title = "Chat " + str(tab_manager.index("end"))
+
         user_data["chat_contents"][chat_title] = chat_content   # Initialize empty chat content for the new chat tab
 
         # Save chat contents to JSON after generating AI response
@@ -159,12 +160,17 @@ def create_main_application_window():
         def handle_user_input(chat_window, user_input, chat_title):
             user_message = user_input.get()
             user_input.delete(0, tk.END)
+
+            # Check if the chat_title exists in the chat_contents dictionary
+            if chat_title not in user_data["chat_contents"]:
+                user_data["chat_contents"][chat_title] = []  # Create an empty list for the chat_title
+
             user_data["chat_contents"][chat_title].append(("You", user_message, time.time()))
             # Save chat contents to JSON after generating AI response
             save_user_data_to_json()
 
             display_chat_content(chat_window, user_data["chat_contents"][chat_title])
-            generate_response(chat_window, user_message, typing_indicator_label)
+            generate_response(chat_window, user_message, typing_indicator_label, chat_title)  # Pass chat_title as a parameter
 
         # Add the chat tab to the tab manager
         tab_manager.add(chat_tab, text=chat_title)
@@ -207,14 +213,23 @@ def create_main_application_window():
 
         # Function to rename the chat tab
         def rename_chat():
+            chat_option_label_text = chat_option_label.cget("text")  # Get the text of the chat option label
             new_chat_title = simpledialog.askstring("Rename Chat", "Enter a new chat title:")
             if new_chat_title:
+                # Update the chat title in the chat option label
                 chat_option_label.configure(text=new_chat_title)
+
+                # Get the old chat title
+                old_chat_title = chat_option_label_text
+
+                # Update the chat title in the tab manager
                 tab_manager.tab(tab_manager.select(), text=new_chat_title)
 
-                # Rename the chat title in the chat_contents dictionary
-                old_chat_title = tab_manager.tab(tab_manager.select(), "text")
+                # Update the chat title in the user_data["chat_contents"] dictionary
                 user_data["chat_contents"][new_chat_title] = user_data["chat_contents"].pop(old_chat_title)
+
+                # Save chat contents to JSON after renaming the chat
+                save_user_data_to_json()
 
         rename_button = ttk.Button(chat_option_frame, text="🖊️", width=3, command=rename_chat)
         rename_button.pack(side="left")
@@ -272,7 +287,7 @@ def create_main_application_window():
     #>>>>>>>>>>>>>>>>>>>>>>>>>>> Chat Display Section <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     # Function to generate a response from the AI
-    def generate_response(chat_window, user_message, typing_indicator_label):
+    def generate_response(chat_window, user_message, typing_indicator_label, chat_title):
         # Show typing indicator
         typing_indicator_label.configure(text="AI is typing...")
 
@@ -283,11 +298,11 @@ def create_main_application_window():
         # Hide typing indicator
         typing_indicator_label.configure(text="")
 
-        user_data["chat_contents"][tab_manager.tab(tab_manager.select(), "text")].append(("AI", response, time.time()))
+        user_data["chat_contents"][chat_title].append(("AI", response, time.time()))
         # Save chat contents to JSON after generating AI response
         save_user_data_to_json()
 
-        display_chat_content(chat_window, user_data["chat_contents"][tab_manager.tab(tab_manager.select(), "text")])
+        display_chat_content(chat_window, user_data["chat_contents"][chat_title])
 
     # Function to display the chat content in the chat window
     def display_chat_content(chat_window, content):
@@ -320,10 +335,31 @@ def create_main_application_window():
 
     # Function to load chats after relogin
     def load_chats_after_relogin():
-        for chat_title, chat_content in user_data["chat_contents"].items():
-            create_chat_tab(chat_content)  # Create a new chat tab for each chat title
-            # Switch to the newly created chat tab and display the chat content
-            display_chat_content(chat_tabs[selected_chat_tab]["window"], chat_content)
+        # Create a copy of chat_contents to avoid modification during iteration
+        chat_contents_copy = user_data["chat_contents"].copy()
+
+        # Create a list to store the updated chat titles after re-login
+        updated_chat_titles = []
+
+        for chat_title, chat_content in chat_contents_copy.items():
+            create_chat_tab(chat_content, chat_title)  # Create a new chat tab for each chat title with the original title
+            updated_chat_titles.append(chat_title)  # Store the original chat title
+
+        # Update the chat titles in the chat options section
+        update_chat_titles_in_chat_options(updated_chat_titles)
+
+    # Function to update chat titles in the chat options section after re-login
+    def update_chat_titles_in_chat_options(updated_chat_titles):
+        # Get the existing chat options frames
+        chat_options_frames = chat_titles_frame.winfo_children()
+
+        for index, chat_option_frame in enumerate(chat_options_frames):
+            chat_option_label = chat_option_frame.winfo_children()[0]
+            original_chat_title = updated_chat_titles[index]
+
+            # Update the chat option label text and event binding with the original chat title
+            chat_option_label.configure(text=original_chat_title)
+            chat_option_label.bind("<Button-1>", lambda event, title=original_chat_title: switch_chat_tab(title))
 
     #>>>>>>>>>>>>>>>>>>>>>>>>>>> Default Tab <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
