@@ -2,7 +2,12 @@ import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog
 import tkinter.messagebox as messagebox
 import time
-from shared_data import user_data, logged_in_user
+from shared_data import user_data, save_user_data_to_json, logged_in_user
+
+# Dictionary to store chat tabs and their corresponding chat titles
+chat_tabs = {}
+# Global variable to keep track of the selected chat tab
+selected_chat_tab = None
 
 # Function to create the main application window
 def create_main_application_window():
@@ -65,7 +70,8 @@ def create_main_application_window():
 
     # Create the new chat button
     def start_new_chat():
-        create_chat_tab()
+        chat_content = []  # Initialize an empty list for chat content
+        create_chat_tab(chat_content)
 
     # Create a frame to contain the buttons
     buttons_frame = tk.Frame(left_panel, bg=col_buttons_frame)
@@ -109,15 +115,16 @@ def create_main_application_window():
 
     #>>>>>>>>>>>>>>>>>>>>>>>>>>> Chat Tab Section <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    # Create a dictionary to store chat contents for each tab
-    chat_contents = {}
-
     # Function to create a new chat tab
-    def create_chat_tab():
+    def create_chat_tab(chat_content):
         global selected_chat_tab  # Access the global variable to update it
 
         chat_title = "Chat " + str(tab_manager.index("end"))
-        chat_contents[chat_title] = []  # Initialize empty chat content for the new chat tab
+        # chat_content = user_data["chat_contents"].get(chat_title, [])
+        user_data["chat_contents"][chat_title] = chat_content   # Initialize empty chat content for the new chat tab
+
+        # Save chat contents to JSON after generating AI response
+        save_user_data_to_json()
 
         # Create a new chat tab
         chat_tab = tk.Frame(tab_manager)
@@ -136,7 +143,7 @@ def create_main_application_window():
         user_input.pack(side="left", pady=6)
 
         # Create the send button
-        send_button = ttk.Button(user_input_frame, text="Send", command=lambda: handle_user_input(chat_window, user_input))
+        send_button = ttk.Button(user_input_frame, text="Send", command=lambda: handle_user_input(chat_window, user_input, chat_title))
         send_button.pack(side="left")
 
         # Create the footer label
@@ -149,11 +156,14 @@ def create_main_application_window():
 
 
         # Function to handle user input for the tab
-        def handle_user_input(chat_window, user_input):
+        def handle_user_input(chat_window, user_input, chat_title):
             user_message = user_input.get()
             user_input.delete(0, tk.END)
-            chat_contents[chat_title].append(("You", user_message, time.time()))
-            display_chat_content(chat_window, chat_contents[chat_title])
+            user_data["chat_contents"][chat_title].append(("You", user_message, time.time()))
+            # Save chat contents to JSON after generating AI response
+            save_user_data_to_json()
+
+            display_chat_content(chat_window, user_data["chat_contents"][chat_title])
             generate_response(chat_window, user_message, typing_indicator_label)
 
         # Add the chat tab to the tab manager
@@ -162,6 +172,12 @@ def create_main_application_window():
         # Select the newly created chat tab and update the selected_chat_tab
         tab_manager.select(chat_tab)
         selected_chat_tab = chat_tab
+
+        # Add the chat tab and its corresponding title and chat window to the chat_tabs dictionary
+        chat_tabs[chat_tab] = {
+            "title": chat_title,
+            "window": chat_window
+        }
 
         # Update the chat options section with the new chat tab
         create_chat_option(chat_title)
@@ -172,6 +188,9 @@ def create_main_application_window():
                 chat_option_frame.configure(bg=col_selected_chat_tab)
             else:
                 chat_option_frame.configure(bg=col_chat_option_frame)
+        
+        # Display the chat content for the new chat tab
+        display_chat_content(chat_window, user_data["chat_contents"][chat_title])
 
     # Function to create a chat option in the chat options section
     def create_chat_option(chat_title):
@@ -186,24 +205,16 @@ def create_main_application_window():
         chat_option_label.pack(side="left", padx=5, pady=5)
         chat_option_label.bind("<Button-1>", switch_chat)
 
-
-        # Reference to the selected chat tab
-        selected_chat_tab = None
-
         # Function to rename the chat tab
         def rename_chat():
-            nonlocal selected_chat_tab  # Update the reference to the selected chat tab
-
             new_chat_title = simpledialog.askstring("Rename Chat", "Enter a new chat title:")
             if new_chat_title:
                 chat_option_label.configure(text=new_chat_title)
-                tab_manager.tab(selected_chat_tab, text=new_chat_title)
-                
-                # Rename the chat title in the chat_contents dictionary
-                old_chat_title = tab_manager.tab(selected_chat_tab, "text")
-                chat_contents[new_chat_title] = chat_contents.pop(old_chat_title)
+                tab_manager.tab(tab_manager.select(), text=new_chat_title)
 
-                selected_chat_tab = None  # Reset the selected chat tab
+                # Rename the chat title in the chat_contents dictionary
+                old_chat_title = tab_manager.tab(tab_manager.select(), "text")
+                user_data["chat_contents"][new_chat_title] = user_data["chat_contents"].pop(old_chat_title)
 
         rename_button = ttk.Button(chat_option_frame, text="🖊️", width=3, command=rename_chat)
         rename_button.pack(side="left")
@@ -214,7 +225,7 @@ def create_main_application_window():
             file_name = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
             if file_name:
                 with open(file_name, "w") as file:
-                    for chat in chat_contents[chat_title]:
+                    for chat in user_data["chat_contents"][chat_title]:
                         user, message, timestamp = chat
                         timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
                         file.write(f"{timestamp_str} - {user}: {message}\n")
@@ -227,7 +238,9 @@ def create_main_application_window():
             for tab in tab_manager.tabs():
                 if tab_manager.tab(tab, "text") == chat_title:
                     tab_manager.forget(tab)
-                    del chat_contents[chat_title]
+                    del user_data["chat_contents"][chat_title]
+                    # Update chat contents in JSON after delete chat
+                    save_user_data_to_json()
                     chat_option_frame.destroy()
                     break
 
@@ -239,10 +252,10 @@ def create_main_application_window():
     def switch_chat_tab(chat_title):
         global selected_chat_tab  # Access the global variable to update it
 
-        for tab in tab_manager.tabs():
-            if tab_manager.tab(tab, "text") == chat_title:
-                tab_manager.select(tab)
-                selected_chat_tab = tab  # Update the selected_chat_tab with the reference to the selected chat tab
+        for chat_tab, chat_info in chat_tabs.items():
+            if chat_info["title"] == chat_title:
+                tab_manager.select(chat_tab)
+                selected_chat_tab = chat_tab  # Update the selected_chat_tab with the chat_tab object
 
                 # Highlight the selected chat option
                 for chat_option_frame in chat_titles_frame.winfo_children():
@@ -270,8 +283,11 @@ def create_main_application_window():
         # Hide typing indicator
         typing_indicator_label.configure(text="")
 
-        chat_contents[tab_manager.tab(tab_manager.select(), "text")].append(("AI", response, time.time()))
-        display_chat_content(chat_window, chat_contents[tab_manager.tab(tab_manager.select(), "text")])
+        user_data["chat_contents"][tab_manager.tab(tab_manager.select(), "text")].append(("AI", response, time.time()))
+        # Save chat contents to JSON after generating AI response
+        save_user_data_to_json()
+
+        display_chat_content(chat_window, user_data["chat_contents"][tab_manager.tab(tab_manager.select(), "text")])
 
     # Function to display the chat content in the chat window
     def display_chat_content(chat_window, content):
@@ -301,6 +317,13 @@ def create_main_application_window():
         chat_window.tag_configure("user_bubble", background="#DCF8C6", foreground="#000000", font=("Arial", 12))
         chat_window.tag_configure("ai_label", font=("Arial", 10, "bold"), foreground="#FF6767")
         chat_window.tag_configure("ai_bubble", background="#E8E8E8", foreground="#000000", font=("Arial", 12))
+
+    # Function to load chats after relogin
+    def load_chats_after_relogin():
+        for chat_title, chat_content in user_data["chat_contents"].items():
+            create_chat_tab(chat_content)  # Create a new chat tab for each chat title
+            # Switch to the newly created chat tab and display the chat content
+            display_chat_content(chat_tabs[selected_chat_tab]["window"], chat_content)
 
     #>>>>>>>>>>>>>>>>>>>>>>>>>>> Default Tab <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -428,13 +451,13 @@ def create_main_application_window():
         result = messagebox.askquestion("Clear Conversations", "Are you sure you want to clear all conversations?")
         if result == "yes":
             # Clear the conversation data
-            for chat_title in chat_contents:
-                chat_contents[chat_title] = []
+            for chat_title in user_data["chat_contents"]:
+                user_data["chat_contents"][chat_title] = []
 
             # Update the chat windows
             for tab in tab_manager.tabs():
                 chat_window = tab.winfo_children()[0]
-                display_chat_content(chat_window, chat_contents[tab_manager.tab(tab, "text")])
+                display_chat_content(chat_window, user_data["chat_contents"][tab_manager.tab(tab, "text")])
 
     # Function to show help and FAQ
     def show_help_faq():
@@ -578,6 +601,9 @@ def create_main_application_window():
     def logout():
         result = messagebox.askquestion("Logout", "Are you sure you want to logout?")
         if result == "yes":
+            # Save chat contents to JSON after generating AI response
+            save_user_data_to_json()
+
             # Perform logout actions
             window.destroy()
 
@@ -587,6 +613,9 @@ def create_main_application_window():
 
 
     # --------------end-------------
+
+    # Load chats after relogin
+    load_chats_after_relogin()
 
     # Run the main window loop
     window.mainloop()

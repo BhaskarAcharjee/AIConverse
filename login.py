@@ -3,7 +3,7 @@ from tkinter import ttk
 import tkinter.messagebox as messagebox
 import hashlib
 from AIConverse import create_main_application_window
-from shared_data import valid_credentials, user_data
+from shared_data import valid_credentials, user_data, save_user_data_to_json
 
 # Global variables for user registration
 global login_window, registration_step, username_entry, password_entry, first_name_entry, last_name_entry
@@ -181,6 +181,9 @@ def step_two():
     if username.strip() and password.strip():
         user_data["username"] = username
         user_data["password"] = hashlib.md5(password.encode()).hexdigest()
+        # Save chat contents to JSON after generating AI response
+        save_user_data_to_json()
+
         registration_step = 2
         login_window.destroy()
         create_signup_window()
@@ -200,6 +203,10 @@ def complete_registration():
 
         # Store the user_data dictionary in the valid_credentials dictionary (for demonstration purposes only)
         valid_credentials[user_data["username"]] = user_data["password"]
+
+        # Save chat contents to JSON after generating AI response
+        save_user_data_to_json()
+
 
         messagebox.showinfo("Registration Successful", "User registered successfully!")
         registration_step = 1
