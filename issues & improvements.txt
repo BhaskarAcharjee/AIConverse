@@ -1,0 +1,8 @@
+---------------------- Issues ----------------------
+1. after rename chat chat contents removes
+2. after rename chat title frame highlighted not works
+
+
+
+---------------------- Improvments ---------------------- 
+1. generate response

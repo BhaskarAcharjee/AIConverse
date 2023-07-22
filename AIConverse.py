@@ -2,12 +2,15 @@ import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog
 import tkinter.messagebox as messagebox
 import time
-from shared_data import user_data, save_user_data_to_json, logged_in_user
+from shared_data import user_data, save_user_data_to_json, logged_in_user, color_schemes, layout_styles, bubble_styles, default_settings, extract_color_values
 
 # Dictionary to store chat tabs and their corresponding chat titles
 chat_tabs = {}
 # Global variable to keep track of the selected chat tab
 selected_chat_tab = None
+
+# Combine all settings into a single dictionary
+app_settings = {**default_settings, **color_schemes['Light'], **layout_styles['Compact'], **bubble_styles['Standard']}
 
 # Function to create the main application window
 def create_main_application_window():
@@ -18,23 +21,13 @@ def create_main_application_window():
     window.title("AIConverse")
     window.state("zoomed")
 
-    # Default color scheme values
-    col_left_panel = "#F5F5F5"
-    col_right_panel = "#FFFFFF"
-    col_profile_frame = "#F0F0F0"
-    col_profile_image = "#F0F0F0"
-    col_profile_details = "#F0F0F0"
-    col_profile_name = "#F0F0F0"
-    col_profile_status = "#F0F0F0"
-    col_profile_options_button = "#F0F0F0"
-    col_options_frame = "#F0F0F0"
-    col_options_canvas = "#F0F0F0"
-    col_buttons_frame = "#F0F0F0"
-    col_chat_titles_frame = "#F0F0F0"
-    col_typing_indicator_label = "#F0F0F0"
-    col_chat_option_frame = "#F0F0F0"
-    col_chat_option_label = "#F0F0F0"
-    col_selected_chat_tab = "#D0D0D0"
+    # Get the default color scheme for the selected theme (Light or Dark)
+    selected_color_scheme = user_data.get("color_scheme", "Light")
+    color_scheme = color_schemes[selected_color_scheme]
+
+    # Extract the color values from the color scheme
+    (col_left_panel, col_right_panel, col_profile_frame, col_profile_image, col_profile_details, col_profile_name, col_profile_status, col_profile_options_button, col_options_frame, col_options_canvas, col_buttons_frame, col_chat_titles_frame, col_typing_indicator_label, col_chat_option_frame, col_chat_option_label, col_selected_chat_tab
+    ) = extract_color_values(color_scheme)
 
     #>>>>>>>>>>>>>>>>>>>>>>>>>>> Basic Architecture <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -547,88 +540,54 @@ def create_main_application_window():
 
         # Create the apply button
         def apply_settings():
-            global col_left_panel, col_right_panel, col_profile_frame, col_profile_image, col_profile_details, col_profile_name, col_profile_status, col_profile_options_button, col_options_frame, col_options_canvas, col_buttons_frame, col_typing_indicator_label, col_chat_option_frame, col_chat_option_label, col_chat_titles_frame
-            
+            global app_settings
+
             selected_color_scheme = color_scheme_var.get()
             selected_layout = layout_var.get()
             selected_bubble_style = bubble_style_var.get()
 
+            # Update the application settings based on the selected options
+            app_settings = {
+                **color_schemes[selected_color_scheme],
+                **layout_styles[selected_layout],
+                **bubble_styles[selected_bubble_style]
+            }
+
             # Apply the selected settings (update the application's theme, layout, and chat bubble styles)
-            if selected_color_scheme == 'Light':
-                # Default color scheme values
-                col_left_panel = "#F5F5F5"
-                col_right_panel = "#FFFFFF"
-                col_profile_frame = "#F0F0F0"
-                col_profile_image = "#F0F0F0"
-                col_profile_details = "#F0F0F0"
-                col_profile_name = "#F0F0F0"
-                col_profile_status = "#F0F0F0"
-                col_profile_options_button = "#F0F0F0"
-                col_options_frame = "#F0F0F0"
-                col_options_canvas = "#F0F0F0"
-                col_buttons_frame = "#F0F0F0"
-                col_chat_titles_frame = "#F0F0F0"
-                col_typing_indicator_label = "#F0F0F0"
-                col_chat_option_frame = "#F0F0F0"
-                col_chat_option_label = "#F0F0F0"
-            elif selected_color_scheme == 'Dark':
-                col_left_panel = "#1F1F1F"
-                col_right_panel = "#2A2A2A"
-                col_profile_frame = "#1F1F1F"
-                col_profile_image = "#363636"
-                col_profile_details = "#363636"
-                col_profile_name = "#FFFFFF"
-                col_profile_status = "#FFFFFF"
-                col_profile_options_button = "#363636"
-                col_options_frame = "#363636"
-                col_options_canvas = "#363636"
-                col_buttons_frame = "#363636"
-                col_chat_titles_frame = "#1F1F1F"
-                col_typing_indicator_label = "#363636"
-                col_chat_option_frame = "#363636"
-                col_chat_option_label = "#FFFFFF"
-
-            # # Apply compact layout
-            # if selected_layout == 'Compact':
-            #     # Set the appropriate padding and spacing values for the compact layout
-            # # Apply comfortable layout
-            # elif selected_layout == 'Comfortable':
-            #     # Set the appropriate padding and spacing values for the comfortable layout
-
-            # # Apply standard bubble style
-            # if selected_bubble_style == 'Standard':
-            #     # Set the background color of the chat bubbles
-            # # Apply modern bubble style
-            # elif selected_bubble_style == 'Modern':
-            #     # Set the background color of the chat bubbles
-
-
-            # Update the values in the GUI
             update_gui_values()
+
+            # Update the selected settings in the user_data dictionary
+            user_data['theme_settings']['color_scheme'] = selected_color_scheme
+            user_data['theme_settings']['layout'] = selected_layout
+            user_data['theme_settings']['bubble_style'] = selected_bubble_style
+
+            # Save the updated user_data to JSON
+            save_user_data_to_json()
 
             # Show a success message
             messagebox.showinfo("Settings", "Settings applied successfully.")
 
             # Close the settings window
             settings_window.destroy()
-            
-        # Update the GUI elements with the new color scheme values
+
+        # Function to update the GUI elements with the new settings
         def update_gui_values():
-            left_panel.configure(background=col_left_panel)
-            right_panel.configure(background=col_right_panel)
-            profile_frame.configure(background=col_profile_frame)
-            profile_image.configure(background=col_profile_image)
-            profile_details.configure(background=col_profile_details)
-            profile_name.configure(background=col_profile_name)
-            profile_status.configure(background=col_profile_status)
-            profile_options_button.configure(background=col_profile_options_button)
-            options_frame.configure(background=col_options_frame)
-            options_canvas.configure(background=col_options_canvas)
-            buttons_frame.configure(background=col_buttons_frame)
-            chat_titles_frame.configure(background=col_chat_titles_frame)
-            # typing_indicator_label.configure(background=col_typing_indicator_label)
-            # option_frame.configure(background=col_option_frame)
-            # chat_option_label.configure(background=col_chat_option_label)
+            left_panel.configure(background=app_settings['col_left_panel'])
+            right_panel.configure(background=app_settings['col_right_panel'])
+            profile_frame.configure(background=app_settings['col_profile_frame'])
+            profile_image.configure(background=app_settings['col_profile_image'])
+            profile_details.configure(background=app_settings['col_profile_details'])
+            profile_name.configure(background=app_settings['col_profile_name'])
+            profile_status.configure(background=app_settings['col_profile_status'])
+            profile_options_button.configure(background=app_settings['col_profile_options_button'])
+            options_frame.configure(background=app_settings['col_options_frame'])
+            options_canvas.configure(background=app_settings['col_options_canvas'])
+            buttons_frame.configure(background=app_settings['col_buttons_frame'])
+            chat_titles_frame.configure(background=app_settings['col_chat_titles_frame'])
+            # typing_indicator_label.configure(background=app_settings['col_typing_indicator_label'])
+            # option_frame.configure(background=app_settings['col_option_frame'])
+            # chat_option_label.configure(background=app_settings['col_chat_option_label'])
+            # Update other GUI elements with layout and bubble style settings as needed
 
         apply_button = ttk.Button(settings_window, text="Apply", command=apply_settings)
         apply_button.pack(pady=10)
