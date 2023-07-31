@@ -1,8 +1,10 @@
 ---------------------- Issues ----------------------
-1. after rename chat chat contents removes
+1. after rename chat chat contents not save for new chat title
 2. after rename chat title frame highlighted not works
+3. after rename old chat contets not transfered to new chat title content and its creating another chat title by default name and save content instead of renamed chat
 
 
 
 ---------------------- Improvments ---------------------- 
 1. generate response
+2. theme color, layout

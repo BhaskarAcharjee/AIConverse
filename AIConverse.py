@@ -112,8 +112,11 @@ def create_main_application_window():
     def create_chat_tab(chat_content, chat_title=None):
         global selected_chat_tab  # Access the global variable to update it
 
-        if chat_title is None:
-            chat_title = "Chat " + str(tab_manager.index("end"))
+        if not chat_title:
+            # Generate a unique chat title based on the current date and time, including milliseconds
+            title_timestamp_str = time.strftime("%d-%b-%y %H:%M", time.localtime())
+            milliseconds = int((time.time() % 1) * 1000)  # Calculate milliseconds from the current time
+            chat_title = f"Chat: {title_timestamp_str}:{milliseconds}"
 
         user_data["chat_contents"][chat_title] = chat_content   # Initialize empty chat content for the new chat tab
 
@@ -343,16 +346,13 @@ def create_main_application_window():
 
     # Function to update chat titles in the chat options section after re-login
     def update_chat_titles_in_chat_options(updated_chat_titles):
-        # Get the existing chat options frames
-        chat_options_frames = chat_titles_frame.winfo_children()
+        # Clear the existing chat options frames
+        for chat_option_frame in chat_titles_frame.winfo_children():
+            chat_option_frame.destroy()
 
-        for index, chat_option_frame in enumerate(chat_options_frames):
-            chat_option_label = chat_option_frame.winfo_children()[0]
-            original_chat_title = updated_chat_titles[index]
+        for chat_title in updated_chat_titles:
+            create_chat_option(chat_title)
 
-            # Update the chat option label text and event binding with the original chat title
-            chat_option_label.configure(text=original_chat_title)
-            chat_option_label.bind("<Button-1>", lambda event, title=original_chat_title: switch_chat_tab(title))
 
     #>>>>>>>>>>>>>>>>>>>>>>>>>>> Default Tab <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -475,18 +475,27 @@ def create_main_application_window():
     # Bind the profile options button to show the profile options
     profile_options_button.bind("<Button-1>", lambda event: show_profile_options())
 
-    # Function to clear conversations (**issue**)
+    # Function to clear conversations
     def clear_conversations():
         result = messagebox.askquestion("Clear Conversations", "Are you sure you want to clear all conversations?")
         if result == "yes":
             # Clear the conversation data
-            for chat_title in user_data["chat_contents"]:
-                user_data["chat_contents"][chat_title] = []
+            user_data["chat_contents"].clear()
 
-            # Update the chat windows
-            for tab in tab_manager.tabs():
-                chat_window = tab.winfo_children()[0]
-                display_chat_content(chat_window, user_data["chat_contents"][tab_manager.tab(tab, "text")])
+            # Close all chat tabs and update the chat_tabs dictionary
+            for tab in list(chat_tabs.keys()):
+                tab_manager.forget(tab)
+                del chat_tabs[tab]
+
+            # Clear all chat titles and associated chat options
+            for chat_option_frame in chat_titles_frame.winfo_children():
+                chat_option_frame.destroy()
+
+            # Save chat contents to JSON after clearing conversations
+            save_user_data_to_json()
+
+            # Display a message indicating that conversations have been cleared
+            messagebox.showinfo("Clear Conversations", "All conversations have been cleared.")
 
     # Function to show help and FAQ
     def show_help_faq():
