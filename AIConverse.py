@@ -110,7 +110,9 @@ def create_main_application_window():
 
     # Function to create a new chat tab
     def create_chat_tab(chat_content, chat_title=None):
-        global selected_chat_tab  # Access the global variable to update it
+        global chat_tab  # Access the global variable to update it
+
+        chat_tab = tk.Frame(tab_manager)  # Define chat_tab
 
         if not chat_title:
             # Generate a unique chat title based on the current date and time, including milliseconds
@@ -209,7 +211,7 @@ def create_main_application_window():
 
         # Function to rename the chat tab
         def rename_chat():
-            chat_option_label_text = chat_option_label.cget("text")  # Get the text of the chat option label
+            chat_option_label_text = chat_option_label.cget("text")
             new_chat_title = simpledialog.askstring("Rename Chat", "Enter a new chat title:")
             if new_chat_title:
                 # Update the chat title in the chat option label
@@ -223,6 +225,9 @@ def create_main_application_window():
 
                 # Update the chat title in the user_data["chat_contents"] dictionary
                 user_data["chat_contents"][new_chat_title] = user_data["chat_contents"].pop(old_chat_title)
+
+                # Update the chat title in the chat_tabs dictionary
+                chat_tabs[chat_tab]["title"] = new_chat_title
 
                 # Save chat contents to JSON after renaming the chat
                 save_user_data_to_json()
@@ -246,11 +251,12 @@ def create_main_application_window():
 
         # Function to delete the chat tab and associated chat option
         def delete_chat():
-            for tab in tab_manager.tabs():
-                if tab_manager.tab(tab, "text") == chat_title:
+            for tab in list(chat_tabs.keys()):
+                if chat_tabs[tab]["title"] == chat_title:
                     tab_manager.forget(tab)
+                    del chat_tabs[tab]
                     del user_data["chat_contents"][chat_title]
-                    # Update chat contents in JSON after delete chat
+                    # Update chat contents in JSON after deleting chat
                     save_user_data_to_json()
                     chat_option_frame.destroy()
                     break
