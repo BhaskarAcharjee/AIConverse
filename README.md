@@ -26,4 +26,4 @@ Contributions to AIConverse are welcome! If you're interested in contributing, p
 6. Provide a clear description of the changes you've made and why they are beneficial.
 7. Wait for the project maintainers to review your pull request and provide feedback.
 
-Together, we can build a powerful and user-friendly chat application.
+By collaborating and sharing ideas, the AIConverse project can evolve into a powerful and user-friendly AI chat application.
